@@ -1,0 +1,128 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id    String  @id @default(uuid())
+  username   String?
+  password   String?
+  name       String
+  email      String?
+  phone      String?
+  creditcard String?
+  position   String?
+
+  role Role @default(EMPLOYEE)
+
+  warehouse_id Int
+  warehouse    Warehouse     @relation(fields: [warehouse_id], references: [warehouse_id])
+  transaction  Transaction[]
+
+  inputby   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Customer {
+  customer_id Int     @id @default(autoincrement())
+  name        String
+  alamat      String?
+  phone       String
+
+  warehouse_id Int
+  warehouse    Warehouse @relation(fields: [warehouse_id], references: [warehouse_id])
+}
+
+model Transaction {
+  transaction_id   String @id @default(uuid())
+  transaction_code String
+  user_id          String
+  sales_name       User   @relation(references: [user_id], fields: [user_id])
+  Cart             Cart[]
+  total            String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Cart {
+  cart_id    Int    @id @default(autoincrement())
+  product_id String
+  quantity   Int
+  total      Float
+
+  transaction_id String
+  transaction    Transaction @relation(fields: [transaction_id], references: [transaction_id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Warehouse {
+  warehouse_id Int    @id @default(autoincrement())
+  name         String
+  location     String
+
+  user     User[]
+  product  Product[]
+  customer Customer[]
+  stock    Stock[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  product_id  String  @id @default(uuid())
+  image       String
+  name        String
+  unit        String  @default("pcs")
+  sell_price  Float
+  buy_price   Float
+  tier_price  String?
+  description String
+
+  stock       Stock[]
+  category_id Int?
+  Category    Category?   @relation(fields: [category_id], references: [category_id])
+  warehouse   Warehouse[]
+
+  inputby   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Stock {
+  stock_id Int @id @default(autoincrement())
+  total    Int
+
+  warehouse_id Int
+  warhouse     Warehouse @relation(fields: [warehouse_id], references: [warehouse_id])
+
+  product_id String
+  product    Product @relation(fields: [product_id], references: [product_id])
+}
+
+model Category {
+  category_id Int       @id @default(autoincrement())
+  name        String
+  description String
+  Product     Product[]
+}
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+  SALES
+}
