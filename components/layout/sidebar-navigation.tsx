@@ -55,7 +55,7 @@ const menu: Menu[] = [
   },
   {
     title: "Report",
-    url: "/dashboard/settings",
+    url: "/dashboard/report",
     icon: <FileBarChart />,
   },
   {
