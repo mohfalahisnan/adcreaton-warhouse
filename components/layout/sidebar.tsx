@@ -21,7 +21,7 @@ const Sidebar = (props: Props) => {
   }, [value]);
   useEffect(() => {}, []);
   return (
-    <div className="flex flex-col flex-shrink-0 min-h-screen bg-foreground text-background w-60">
+    <div className="hidden md:flex flex-col flex-shrink-0 min-h-screen bg-foreground text-background w-52">
       <div className="flex flex-col items-center justify-center p-4">
         <div className="text-left text-xl w-full mb-4 font-bold">
           Dashboard<span className="text-primary text-3xl">.</span>

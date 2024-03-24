@@ -17,7 +17,7 @@ const DashboardLayout = ({ children }: Props) => {
       <Sidebar />
       <div className="flex-1 w-full">
         <MainNav />
-        <div className="rounded-tl-2xl bg-background p-8 min-h-[calc(100vh-4rem)]">
+        <div className="rounded-tl-2xl bg-background p-4 min-h-[calc(100vh-4rem)]">
           {children}
         </div>
       </div>

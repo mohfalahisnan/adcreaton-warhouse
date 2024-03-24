@@ -1,21 +1,9 @@
+import Overview from "@/components/section/overview";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
 import { Download, Plus } from "lucide-react";
 import React from "react";
+import { DataTable } from "../_components/data-table";
 
 type Props = {};
 
@@ -43,42 +31,18 @@ const page = (props: Props) => {
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4 mt-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+        <Overview title="Income" value={243} lastweak={432} unit="pcs" />
+        <Overview title="Income" value={123} lastweak={112} unit="%" />
+        <Overview title="Income" value={343} lastweak={332} unit="pcs" />
+        <Overview title="Income" value={343} lastweak={132} unit="pcs" />
+      </div>
+      <div className="grid grid-cols-1 mt-4 gap-4">
         <Card>
-          <CardHeader className="pb-0">
-            <div className="flex justify-between items-center">
-              <h3 className="font-semibold text-lg">Sales Performance</h3>
-              <Select>
-                <SelectTrigger className="w-[100px]">
-                  <SelectValue placeholder="Monthly" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="yearly">Yearly</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-          <CardContent>Hallo</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-0">
-            <div className="flex justify-between items-center">
-              <h3 className="font-semibold text-lg">Sales Performance</h3>
-              <Select>
-                <SelectTrigger className="w-[100px]">
-                  <SelectValue placeholder="Monthly" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="yearly">Yearly</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-          <CardContent>Hallo</CardContent>
+          <CardContent className="pt-4">
+            <h3>Order</h3>
+            <DataTable />
+          </CardContent>
         </Card>
       </div>
     </div>
