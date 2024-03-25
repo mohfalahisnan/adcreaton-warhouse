@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Download, Plus } from "lucide-react";
 import React from "react";
+import { DataTable } from "./_components/data-table";
 
 type Props = {};
 
@@ -27,6 +28,9 @@ const Page = (props: Props) => {
             </Button>
           </div>
         </div>
+      </div>
+      <div>
+        <DataTable />
       </div>
     </div>
   );
