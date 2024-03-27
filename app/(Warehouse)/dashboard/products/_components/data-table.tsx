@@ -13,7 +13,15 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
+import {
+  ArrowUpDown,
+  ArrowUpRight,
+  ChevronDown,
+  Clipboard,
+  MoreHorizontal,
+  PencilIcon,
+  Trash,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -36,46 +44,36 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Prisma } from "@prisma/client";
+import Image from "next/image";
 
-export interface IProduct {
-  product_id: string;
-  name: string;
-  unit: string;
-  buy_price: number;
-  sell_price: number;
-  category: string;
-  stock: number;
-}
+type ProductWithStock = Prisma.WarehouseGetPayload<{
+  select: {
+    product: {
+      include: {
+        stock: true;
+        Category: {
+          select: {
+            name: true;
+          };
+        };
+        warehouse: { select: { warehouse_id: true } };
+      };
+    };
+  };
+}>;
 
-const data: IProduct[] = [
-  {
-    product_id: "m5gr84i9",
-    name: "product name",
-    unit: "pcs",
-    buy_price: 300,
-    sell_price: 316,
-    stock: 43,
-    category: "makanan",
-  },
-  {
-    product_id: "m5gr2184i9",
-    name: "product name 2",
-    unit: "pcs",
-    buy_price: 320,
-    sell_price: 341,
-    stock: 86,
-    category: "makanan",
-  },
-  {
-    product_id: "m5gr2184i9",
-    name: "product name 3",
-    unit: "pcs",
-    buy_price: 620,
-    sell_price: 741,
-    stock: 0,
-    category: "makanan",
-  },
-];
+type IProduct = Prisma.ProductGetPayload<{
+  include: {
+    stock: true;
+    Category: {
+      select: {
+        name: true;
+      };
+    };
+    warehouse: { select: { warehouse_id: true } };
+  };
+}>;
 
 export const columns: ColumnDef<IProduct>[] = [
   {
@@ -114,7 +112,45 @@ export const columns: ColumnDef<IProduct>[] = [
         </Button>
       );
     },
-    cell: ({ row }) => <div className="lowercase">{row.getValue("name")}</div>,
+    cell: ({ row }) => {
+      const product = row.original;
+      return (
+        <div className="flex gap-1">
+          <div className="rounded overflow-hidden">
+            <Image
+              src={product.image}
+              width={50}
+              height={50}
+              alt={product.name}
+            />
+          </div>
+          <div className="">
+            <h3 className="font-semibold capitalize">{product.name}</h3>
+            <p>{product.description}</p>
+          </div>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "Category",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="px-0"
+        >
+          Category
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const product = row.original;
+      if (!product.Category) return <div>No Category</div>;
+      return <div className="capitalize">{product.Category.name}</div>;
+    },
   },
   {
     accessorKey: "stock",
@@ -134,7 +170,13 @@ export const columns: ColumnDef<IProduct>[] = [
       const product = row.original;
       return (
         <div className="lowercase">
-          {product.stock} {product.unit}
+          {product.stock.map((stock, i) => {
+            return (
+              <span key={i}>
+                {stock.total} {product.unit}
+              </span>
+            );
+          })}
         </div>
       );
     },
@@ -148,19 +190,34 @@ export const columns: ColumnDef<IProduct>[] = [
 
       return (
         <div>
-          {product.stock <= 0 ? (
-            <Badge className="py-0 text-[9px] px-2 ml-2" variant={"failed"}>
-              Out Of Stock
-            </Badge>
-          ) : product.stock <= 50 ? (
-            <Badge className="py-0 text-[9px] px-2 ml-2" variant={"processing"}>
-              Low Stock
-            </Badge>
-          ) : (
-            <Badge className="py-0 text-[9px] px-2 ml-2" variant={"default"}>
-              In Stock
-            </Badge>
-          )}
+          {product.stock.map((stock, i) => {
+            return (
+              <div key={i}>
+                {stock.total <= 0 ? (
+                  <Badge
+                    className="py-0 text-[9px] px-2 ml-2"
+                    variant={"failed"}
+                  >
+                    Out Of Stock
+                  </Badge>
+                ) : stock.total <= 50 ? (
+                  <Badge
+                    className="py-0 text-[9px] px-2 ml-2"
+                    variant={"processing"}
+                  >
+                    Low Stock
+                  </Badge>
+                ) : (
+                  <Badge
+                    className="py-0 text-[9px] px-2 ml-2"
+                    variant={"default"}
+                  >
+                    In Stock
+                  </Badge>
+                )}
+              </div>
+            );
+          })}
         </div>
       );
     },
@@ -196,7 +253,6 @@ export const columns: ColumnDef<IProduct>[] = [
     enableHiding: false,
     cell: ({ row }) => {
       const product = row.original;
-
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -208,13 +264,25 @@ export const columns: ColumnDef<IProduct>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
+              className="flex gap-2"
               onClick={() => navigator.clipboard.writeText(product.product_id)}
             >
+              <Clipboard size={14} />
               Copy Product ID
             </DropdownMenuItem>
+            <DropdownMenuItem className="flex gap-2">
+              <ArrowUpRight size={14} />
+              Details
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>View customer</DropdownMenuItem>
-            <DropdownMenuItem>View payment details</DropdownMenuItem>
+            <DropdownMenuItem className="flex gap-2">
+              <PencilIcon size={14} />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem className="flex gap-2 text-red-500">
+              <Trash size={14} />
+              Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -222,7 +290,7 @@ export const columns: ColumnDef<IProduct>[] = [
   },
 ];
 
-export function DataTable() {
+export function DataTable({ data }: { data: ProductWithStock }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -230,9 +298,9 @@ export function DataTable() {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
-
+  const products = data.product;
   const table = useReactTable({
-    data,
+    data: products,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,

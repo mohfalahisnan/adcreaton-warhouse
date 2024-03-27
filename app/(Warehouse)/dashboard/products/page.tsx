@@ -2,10 +2,15 @@ import { Button } from "@/components/ui/button";
 import { Download, Plus } from "lucide-react";
 import React from "react";
 import { DataTable } from "./_components/data-table";
+import { getWarehouseProducts } from "@/lib/actions/products";
+import Link from "next/link";
 
 type Props = {};
 
-const Page = (props: Props) => {
+const Page = async (props: Props) => {
+  const warehouse = await getWarehouseProducts({ warehouse_id: 1 });
+  if (!warehouse) return;
+  // console.log(warehouse.product);
   return (
     <div>
       <div>
@@ -14,10 +19,13 @@ const Page = (props: Props) => {
           <div className="flex gap-2">
             <Button
               variant={"secondary"}
+              asChild
               size={"sm"}
               className="flex items-center gap-2"
             >
-              <Plus size={12} /> Transaction
+              <Link href={"/dashboard/products/add"}>
+                <Plus size={12} /> Product
+              </Link>
             </Button>
             <Button
               variant={"outline"}
@@ -30,7 +38,7 @@ const Page = (props: Props) => {
         </div>
       </div>
       <div>
-        <DataTable />
+        <DataTable data={warehouse} />
       </div>
     </div>
   );

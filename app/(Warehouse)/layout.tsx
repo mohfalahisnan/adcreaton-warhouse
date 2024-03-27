@@ -1,5 +1,6 @@
 import MainNav from "@/components/layout/main-nav";
 import Sidebar from "@/components/layout/sidebar";
+import { Toaster } from "@/components/ui/toaster";
 import { Metadata } from "next";
 import React, { ReactNode } from "react";
 
