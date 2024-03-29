@@ -74,8 +74,8 @@ model Warehouse {
   name         String
   location     String
 
-  user     User[]
-  product  Product[]
+  user User[]
+
   customer Customer[]
   stock    Stock[]
 
@@ -95,8 +95,7 @@ model Product {
 
   stock       Stock[]
   category_id Int?
-  Category    Category?   @relation(fields: [category_id], references: [category_id])
-  warehouse   Warehouse[]
+  Category    Category? @relation(fields: [category_id], references: [category_id])
 
   inputby   String
   createdAt DateTime @default(now())
@@ -111,7 +110,7 @@ model Stock {
   warhouse     Warehouse @relation(fields: [warehouse_id], references: [warehouse_id])
 
   product_id String
-  product    Product @relation(fields: [product_id], references: [product_id])
+  product    Product @relation(fields: [product_id], references: [product_id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Category {

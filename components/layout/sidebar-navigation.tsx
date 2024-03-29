@@ -72,7 +72,7 @@ const SidebarNavigation = (props: Props) => {
       <ul className="flex flex-col gap-2 text-sm">
         {menu.map((item, i) => {
           return (
-            <Link href={item.url} title={item.title}>
+            <Link href={item.url} title={item.title} key={i}>
               <li
                 className={`flex gap-2 items-center py-1.5 px-2.5 rounded hover:bg-white/10 ${
                   path === item.url && "[&_svg]:stroke-primary bg-white/10"

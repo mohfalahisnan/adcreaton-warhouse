@@ -46,12 +46,32 @@ export const addProduct = async (product: Product) => {
             warehouse_id: 1,
           },
         },
+        stock: {
+          createMany: {
+            data: [
+              { total: 100, warehouse_id: 1 },
+              { total: 120, warehouse_id: 2 },
+            ],
+          },
+        },
       },
     });
-    console.log(products);
     return products;
   } catch (error) {
-    console.log(error);
     throw new Error("Failed to fetch");
+  }
+};
+
+export const deleteProduct = async (id: string) => {
+  try {
+    const product = await prisma.product.delete({
+      where: {
+        product_id: id,
+      },
+    });
+    return product;
+  } catch (error) {
+    console.log(error);
+    throw new Error("falied");
   }
 };

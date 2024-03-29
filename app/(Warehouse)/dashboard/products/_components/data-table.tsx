@@ -46,6 +46,22 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Prisma } from "@prisma/client";
 import Image from "next/image";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { deleteProduct } from "@/lib/actions/products";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/components/ui/use-toast";
+import { useRouter } from "next/navigation";
+import { queryClient } from "@/components/provider";
 
 type ProductWithStock = Prisma.WarehouseGetPayload<{
   select: {
@@ -75,221 +91,6 @@ type IProduct = Prisma.ProductGetPayload<{
   };
 }>;
 
-export const columns: ColumnDef<IProduct>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "name",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="px-0"
-        >
-          Product Name
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const product = row.original;
-      return (
-        <div className="flex gap-1">
-          <div className="rounded overflow-hidden">
-            <Image
-              src={product.image}
-              width={50}
-              height={50}
-              alt={product.name}
-            />
-          </div>
-          <div className="">
-            <h3 className="font-semibold capitalize">{product.name}</h3>
-            <p>{product.description}</p>
-          </div>
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "Category",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="px-0"
-        >
-          Category
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const product = row.original;
-      if (!product.Category) return <div>No Category</div>;
-      return <div className="capitalize">{product.Category.name}</div>;
-    },
-  },
-  {
-    accessorKey: "stock",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="px-0"
-        >
-          Stock
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const product = row.original;
-      return (
-        <div className="lowercase">
-          {product.stock.map((stock, i) => {
-            return (
-              <span key={i}>
-                {stock.total} {product.unit}
-              </span>
-            );
-          })}
-        </div>
-      );
-    },
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    header: "Status",
-    cell: ({ row }) => {
-      const product = row.original;
-
-      return (
-        <div>
-          {product.stock.map((stock, i) => {
-            return (
-              <div key={i}>
-                {stock.total <= 0 ? (
-                  <Badge
-                    className="py-0 text-[9px] px-2 ml-2"
-                    variant={"failed"}
-                  >
-                    Out Of Stock
-                  </Badge>
-                ) : stock.total <= 50 ? (
-                  <Badge
-                    className="py-0 text-[9px] px-2 ml-2"
-                    variant={"processing"}
-                  >
-                    Low Stock
-                  </Badge>
-                ) : (
-                  <Badge
-                    className="py-0 text-[9px] px-2 ml-2"
-                    variant={"default"}
-                  >
-                    In Stock
-                  </Badge>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "sell_price",
-    header: ({ column }) => (
-      <div className="text-right">
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Amount
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      </div>
-    ),
-    cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("sell_price"));
-
-      // Format the amount as a dollar amount
-      const formatted = new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
-      }).format(amount);
-
-      return <div className="text-right font-medium mr-3">{formatted}</div>;
-    },
-  },
-
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const product = row.original;
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              className="flex gap-2"
-              onClick={() => navigator.clipboard.writeText(product.product_id)}
-            >
-              <Clipboard size={14} />
-              Copy Product ID
-            </DropdownMenuItem>
-            <DropdownMenuItem className="flex gap-2">
-              <ArrowUpRight size={14} />
-              Details
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="flex gap-2">
-              <PencilIcon size={14} />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem className="flex gap-2 text-red-500">
-              <Trash size={14} />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
-];
-
 export function DataTable({ data }: { data: ProductWithStock }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -298,7 +99,242 @@ export function DataTable({ data }: { data: ProductWithStock }) {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
+  const [openDelete, setOpenDelete] = React.useState(false);
+  const [selectedRow, setSelectedRow] = React.useState<string>();
+  const { toast } = useToast();
   const products = data.product;
+  const router = useRouter();
+  const columns: ColumnDef<IProduct>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "name",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="px-0"
+          >
+            Product Name
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        const product = row.original;
+        return (
+          <div className="flex gap-1">
+            <div className="rounded overflow-hidden">
+              <Image
+                src={product.image}
+                width={50}
+                height={50}
+                alt={product.name}
+              />
+            </div>
+            <div className="">
+              <h3 className="font-semibold capitalize">{product.name}</h3>
+              <p>{product.description}</p>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "Category",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="px-0"
+          >
+            Category
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        const product = row.original;
+        if (!product.Category) return <div>No Category</div>;
+        return <div className="capitalize">{product.Category.name}</div>;
+      },
+    },
+    {
+      accessorKey: "stock",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="px-0"
+          >
+            Stock
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        const product = row.original;
+        return (
+          <div className="lowercase">
+            {product.stock.map((stock, i) => {
+              return (
+                <span key={i}>
+                  {stock.total} {product.unit}
+                </span>
+              );
+            })}
+          </div>
+        );
+      },
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      header: "Status",
+      cell: ({ row }) => {
+        const product = row.original;
+
+        return (
+          <div>
+            {product.stock.map((stock, i) => {
+              return (
+                <div key={i}>
+                  {stock.total <= 0 ? (
+                    <Badge
+                      className="py-0 text-[9px] px-2 ml-2"
+                      variant={"failed"}
+                    >
+                      Out Of Stock
+                    </Badge>
+                  ) : stock.total <= 50 ? (
+                    <Badge
+                      className="py-0 text-[9px] px-2 ml-2"
+                      variant={"processing"}
+                    >
+                      Low Stock
+                    </Badge>
+                  ) : (
+                    <Badge
+                      className="py-0 text-[9px] px-2 ml-2"
+                      variant={"default"}
+                    >
+                      In Stock
+                    </Badge>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "sell_price",
+      header: ({ column }) => (
+        <div className="text-right">
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Amount
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      ),
+      cell: ({ row }) => {
+        const amount = parseFloat(row.getValue("sell_price"));
+
+        // Format the amount as a dollar amount
+        const formatted = new Intl.NumberFormat("id-ID", {
+          style: "currency",
+          currency: "IDR",
+        }).format(amount);
+
+        return <div className="text-right font-medium mr-3">{formatted}</div>;
+      },
+    },
+
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        const product = row.original;
+        const deleteMutation = useMutation({
+          mutationKey: ["deleteProduct"],
+          mutationFn: async (id: string) => await deleteProduct(id),
+          onSuccess: () => {
+            alert("Product deleted!");
+          },
+        });
+
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem
+                className="flex gap-2"
+                onClick={() =>
+                  navigator.clipboard.writeText(product.product_id)
+                }
+              >
+                <Clipboard size={14} />
+                Copy Product ID
+              </DropdownMenuItem>
+              <DropdownMenuItem className="flex gap-2">
+                <ArrowUpRight size={14} />
+                Details
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="flex gap-2">
+                <PencilIcon size={14} />
+                Edit
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={() => {
+                  setOpenDelete(true), setSelectedRow(product.product_id);
+                }}
+                className="flex gap-2 text-red-500"
+              >
+                <Trash size={14} />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
   const table = useReactTable({
     data: products,
     columns,
@@ -317,7 +353,17 @@ export function DataTable({ data }: { data: ProductWithStock }) {
       rowSelection,
     },
   });
-
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => await deleteProduct(id),
+    onSuccess: () => {
+      setOpenDelete(false);
+      setSelectedRow("");
+      toast({
+        title: "Product Deleted!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
   return (
     <div className="w-full mt-4">
       <div className="flex items-center py-4">
@@ -406,7 +452,7 @@ export function DataTable({ data }: { data: ProductWithStock }) {
           </TableBody>
         </Table>
       </div>
-      {/* <div className="flex items-center justify-end space-x-2 py-4">
+      <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
           {table.getFilteredRowModel().rows.length} row(s) selected.
@@ -429,7 +475,39 @@ export function DataTable({ data }: { data: ProductWithStock }) {
             Next
           </Button>
         </div>
-      </div> */}
+      </div>
+      <Button
+        onClick={() =>
+          toast({
+            title: "Product Deleted!",
+          })
+        }
+      >
+        test
+      </Button>
+      <AlertDialog open={openDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              product : {selectedRow}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setOpenDelete(false)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteMutation.isPending}
+              onClick={() => deleteMutation.mutate(selectedRow as string)}
+              className="bg-red-600 hover:bg-red-500 flex gap-2 items-center"
+            >
+              <Trash size={14} />
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

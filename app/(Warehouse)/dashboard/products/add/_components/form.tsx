@@ -14,11 +14,13 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Save, Trash } from "lucide-react";
+import { CheckCircle2, Plus, Save, Trash } from "lucide-react";
 import { addProduct } from "@/lib/actions/products";
 import { Product } from "@prisma/client";
 import { ToastAction } from "@/components/ui/toast";
 import { useToast } from "@/components/ui/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 type Props = {};
 
 export interface ITierPrice {
@@ -33,6 +35,7 @@ const ProductForm = (props: Props) => {
   const [tierPrice, setTierPrice] = useState<ITierPrice[]>([
     { id: 0, from: 0, to: 0, price: 0 },
   ]);
+  const router = useRouter();
   const formSchema = z.object({
     image: z.string(),
     name: z.string().min(6).max(100),
@@ -41,6 +44,36 @@ const ProductForm = (props: Props) => {
     buy_price: z.number(),
     tier_price: z.string().optional(),
     inputby: z.string(),
+  });
+  const queryClient = useQueryClient();
+
+  const productMutation = useMutation({
+    mutationFn: async (values: Product) => await addProduct(values),
+    onSuccess: (prod) => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      router.push("/dashboard/products");
+      toast({
+        description: (
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <span className="text-green-500">
+                <CheckCircle2 size={28} strokeWidth={1} />
+              </span>
+            </div>
+            <div>
+              <h3 className="text-lg">Product Added!</h3>
+            </div>
+          </div>
+        ),
+      });
+    },
+    onError(error, variables, context) {
+      toast({
+        title: `Error: ${error.message}`,
+        description: `${error.message}`,
+        variant: "destructive",
+      });
+    },
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -51,27 +84,7 @@ const ProductForm = (props: Props) => {
     values.tier_price = JSON.stringify(tierPrice);
     values.image = "/products/product-1.jpg";
     // values.inputby = "123";
-    try {
-      const prod = await addProduct(values as Product);
-      if (prod) {
-        toast({
-          title: `Product Added: ${prod.name}`,
-          action: (
-            <div>
-              <ToastAction altText="Goto schedule to undo">
-                Add Stock
-              </ToastAction>
-              <ToastAction altText="Goto schedule to undo">View</ToastAction>
-            </div>
-          ),
-        });
-      }
-      return prod;
-    } catch (error) {
-      console.log(error);
-      alert("Error");
-      return;
-    }
+    productMutation.mutate(values as Product);
   }
 
   const addTierPrice = () => {
@@ -295,13 +308,16 @@ const ProductForm = (props: Props) => {
       <Button
         onClick={() =>
           toast({
-            title: "Scheduled: Catch up ",
             description: (
-              <div className="w-full flex gap-2">
-                <Button size={"xs"}>Add Stock</Button>
-                <Button size={"xs"} variant={"outline"}>
-                  New Product
-                </Button>
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <span className="text-green-500">
+                    <CheckCircle2 size={28} strokeWidth={1} />
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-lg">Product Added!</h3>
+                </div>
               </div>
             ),
           })
