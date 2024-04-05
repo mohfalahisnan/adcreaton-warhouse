@@ -46,8 +46,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Prisma } from "@prisma/client";
 import Image from "next/image";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deleteProduct } from "@/lib/actions/products";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { deleteProduct, getProductById } from "@/lib/actions/products";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,36 +62,20 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import { queryClient } from "@/components/provider";
+import Loading from "../loading";
 
-type ProductWithStock = Prisma.WarehouseGetPayload<{
-  select: {
-    product: {
-      include: {
-        stock: true;
-        Category: {
-          select: {
-            name: true;
-          };
-        };
-        warehouse: { select: { warehouse_id: true } };
-      };
-    };
-  };
-}>;
-
-type IProduct = Prisma.ProductGetPayload<{
+type ProductWithStock = Prisma.ProductGetPayload<{
   include: {
-    stock: true;
-    Category: {
-      select: {
-        name: true;
+    Category: true;
+    stock: {
+      include: {
+        warhouse: true;
       };
     };
-    warehouse: { select: { warehouse_id: true } };
   };
 }>;
 
-export function DataTable({ data }: { data: ProductWithStock }) {
+export function DataTable({ data }: { data: ProductWithStock[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -100,11 +84,12 @@ export function DataTable({ data }: { data: ProductWithStock }) {
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
   const [openDelete, setOpenDelete] = React.useState(false);
+  const [openDetail, setOpenDetail] = React.useState(false);
   const [selectedRow, setSelectedRow] = React.useState<string>();
   const { toast } = useToast();
-  const products = data.product;
+  const products = data;
   const router = useRouter();
-  const columns: ColumnDef<IProduct>[] = [
+  const columns: ColumnDef<ProductWithStock>[] = [
     {
       id: "select",
       header: ({ table }) => (
@@ -144,7 +129,13 @@ export function DataTable({ data }: { data: ProductWithStock }) {
       cell: ({ row }) => {
         const product = row.original;
         return (
-          <div className="flex gap-1">
+          <div
+            className="flex gap-1 cursor-pointer"
+            onClick={() => {
+              setSelectedRow(product.product_id);
+              setOpenDetail(true);
+            }}
+          >
             <div className="rounded overflow-hidden">
               <Image
                 src={product.image}
@@ -198,13 +189,15 @@ export function DataTable({ data }: { data: ProductWithStock }) {
       cell: ({ row }) => {
         const product = row.original;
         return (
-          <div className="lowercase">
+          <div className="lowercase flex flex-row gap-2 relative group">
             {product.stock.map((stock, i) => {
-              return (
-                <span key={i}>
-                  {stock.total} {product.unit}
-                </span>
-              );
+              if (stock.warehouse_id === 1) {
+                return (
+                  <span key={i}>
+                    {stock.total} {product.unit}
+                  </span>
+                );
+              }
             })}
           </div>
         );
@@ -309,7 +302,13 @@ export function DataTable({ data }: { data: ProductWithStock }) {
                 <Clipboard size={14} />
                 Copy Product ID
               </DropdownMenuItem>
-              <DropdownMenuItem className="flex gap-2">
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedRow(product.product_id);
+                  setOpenDetail(true);
+                }}
+                className="flex gap-2"
+              >
                 <ArrowUpRight size={14} />
                 Details
               </DropdownMenuItem>
@@ -364,6 +363,22 @@ export function DataTable({ data }: { data: ProductWithStock }) {
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
+  const productQuery = useQuery({
+    queryKey: ["product", selectedRow],
+    queryFn: async () => {
+      if (!selectedRow) return;
+      const product = await getProductById(selectedRow);
+      return product;
+    },
+    enabled: false,
+    refetchOnWindowFocus: false,
+  });
+
+  React.useEffect(() => {
+    if (!selectedRow) return;
+    productQuery.refetch();
+  }, [selectedRow]);
+
   return (
     <div className="w-full mt-4">
       <div className="flex items-center py-4">
@@ -476,15 +491,6 @@ export function DataTable({ data }: { data: ProductWithStock }) {
           </Button>
         </div>
       </div>
-      <Button
-        onClick={() =>
-          toast({
-            title: "Product Deleted!",
-          })
-        }
-      >
-        test
-      </Button>
       <AlertDialog open={openDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -506,6 +512,39 @@ export function DataTable({ data }: { data: ProductWithStock }) {
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={openDetail}>
+        <AlertDialogContent>
+          {productQuery.isLoading ? (
+            <AlertDialogHeader>
+              <Loading />
+            </AlertDialogHeader>
+          ) : (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{productQuery.data?.name}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  <p>{productQuery.data?.description}</p>
+                  <ul>
+                    {productQuery.data?.stock.map((stock, i) => {
+                      return (
+                        <li key={i}>
+                          {stock.warhouse.name} : {stock.total}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setOpenDetail(false)}>
+                  Close
+                </AlertDialogCancel>
+              </AlertDialogFooter>
+            </>
+          )}
         </AlertDialogContent>
       </AlertDialog>
     </div>

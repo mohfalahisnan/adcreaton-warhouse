@@ -1,33 +1,18 @@
 "use server";
 import { prisma } from "@/lib/prisma";
-import { Prisma, Product } from "@prisma/client";
+import { Product } from "@prisma/client";
 
-export const getWarehouseProducts = async ({
-  warehouse_id,
-}: {
-  warehouse_id?: number;
-}) => {
+export const getProducts = async () => {
   try {
-    const products = await prisma.warehouse.findUnique({
-      where: {
-        warehouse_id: warehouse_id,
-      },
-      select: {
-        product: {
+    const products = await prisma.product.findMany({
+      include: {
+        Category: true,
+        stock: {
           include: {
-            stock: {
-              where: {
-                warehouse_id: warehouse_id,
-              },
-            },
-            Category: {
-              select: {
-                name: true,
-              },
-            },
-            warehouse: { select: { warehouse_id: true } },
+            warhouse: true,
           },
         },
+        _count: true,
       },
     });
     return products;
@@ -41,11 +26,6 @@ export const addProduct = async (product: Product) => {
     const products = await prisma.product.create({
       data: {
         ...product,
-        warehouse: {
-          connect: {
-            warehouse_id: 1,
-          },
-        },
         stock: {
           createMany: {
             data: [
@@ -57,6 +37,27 @@ export const addProduct = async (product: Product) => {
       },
     });
     return products;
+  } catch (error) {
+    throw new Error("Failed to fetch");
+  }
+};
+
+export const getProductById = async (id: string) => {
+  try {
+    const product = await prisma.product.findUnique({
+      where: {
+        product_id: id,
+      },
+      include: {
+        Category: true,
+        stock: {
+          include: {
+            warhouse: true,
+          },
+        },
+      },
+    });
+    return product;
   } catch (error) {
     throw new Error("Failed to fetch");
   }

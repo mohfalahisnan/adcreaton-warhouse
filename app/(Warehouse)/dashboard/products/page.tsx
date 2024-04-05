@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Plus } from "lucide-react";
 import React from "react";
 import { DataTable } from "./_components/data-table";
-import { getWarehouseProducts } from "@/lib/actions/products";
+import { getProducts } from "@/lib/actions/products";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 
@@ -12,9 +12,10 @@ type Props = {};
 const Page = async (props: Props) => {
   const { data } = useQuery({
     queryKey: ["products"],
-    queryFn: async () => await getWarehouseProducts({ warehouse_id: 1 }),
+    queryFn: async () => await getProducts(),
   });
   if (!data) return;
+  console.log(data);
   return (
     <div>
       <div>
