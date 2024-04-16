@@ -3,19 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Download, Plus } from "lucide-react";
 import React from "react";
 import { DataTable } from "./_components/data-table";
-import { getProducts } from "@/lib/actions/products";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useGetProducts } from "@/hook/useProduct";
 
-type Props = {};
+const Page = async () => {
+  const { data, isLoading } = useGetProducts();
 
-const Page = async (props: Props) => {
-  const { data } = useQuery({
-    queryKey: ["products"],
-    queryFn: async () => await getProducts(),
-  });
-  if (!data) return;
-  console.log(data);
   return (
     <div>
       <div>
@@ -42,9 +35,7 @@ const Page = async (props: Props) => {
           </div>
         </div>
       </div>
-      <div>
-        <DataTable data={data} />
-      </div>
+      <div>{isLoading ? "Loading..." : <DataTable data={data || []} />}</div>
     </div>
   );
 };

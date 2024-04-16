@@ -3,6 +3,8 @@ import Sidebar from "@/components/layout/sidebar";
 
 import { Metadata } from "next";
 import React, { ReactNode } from "react";
+import { auth } from "../auth";
+import { redirect } from "next/navigation";
 
 type Props = {
   children: ReactNode;
@@ -12,7 +14,9 @@ export const metadata: Metadata = {
   description: "dashboard",
 };
 
-const DashboardLayout = ({ children }: Props) => {
+const DashboardLayout = async ({ children }: Props) => {
+  const session = await auth();
+  if (!session) redirect("/login");
   return (
     <div className="flex bg-foreground">
       <Sidebar />

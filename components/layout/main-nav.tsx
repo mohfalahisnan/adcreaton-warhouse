@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
@@ -30,6 +31,7 @@ import {
   UserPlus,
   Users,
 } from "lucide-react";
+import { signOut } from "next-auth/react";
 
 type Props = {};
 
@@ -119,7 +121,7 @@ const MainNav = (props: Props) => {
               <span>API</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => signOut()}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
               <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>

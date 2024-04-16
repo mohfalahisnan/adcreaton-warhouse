@@ -28,16 +28,14 @@ export const addProduct = async (product: Product) => {
         ...product,
         stock: {
           createMany: {
-            data: [
-              { total: 100, warehouse_id: 1 },
-              { total: 120, warehouse_id: 2 },
-            ],
+            data: [{ total: 100, warehouse_id: 1 }],
           },
         },
       },
     });
     return products;
   } catch (error) {
+    console.log(error);
     throw new Error("Failed to fetch");
   }
 };

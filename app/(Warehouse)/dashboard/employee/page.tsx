@@ -1,16 +1,27 @@
 "use client";
+import { useGetEmployee } from "@/hook/useEmployee";
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getWarehouseProducts } from "@/lib/actions/products";
+
 type Props = {};
 
 const Page = (props: Props) => {
-  const data = useQuery({
-    queryKey: ["employee"],
-    queryFn: async () => await getWarehouseProducts({ warehouse_id: 1 }),
-  });
-
-  return <div>{JSON.stringify(data.data?.product)}</div>;
+  const { data, isLoading } = useGetEmployee({});
+  return (
+    <div>
+      {isLoading ? (
+        "Loading..."
+      ) : (
+        <>
+          {data &&
+            data.map((user, index) => (
+              <h3 key={index}>
+                {user.name} {user.email} {user.position}
+              </h3>
+            ))}
+        </>
+      )}
+    </div>
+  );
 };
 
 export default Page;

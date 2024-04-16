@@ -44,9 +44,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Prisma } from "@prisma/client";
 import Image from "next/image";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { deleteProduct, getProductById } from "@/lib/actions/products";
 import {
   AlertDialog,
@@ -57,23 +56,11 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import { queryClient } from "@/components/provider";
-import Loading from "../loading";
-
-type ProductWithStock = Prisma.ProductGetPayload<{
-  include: {
-    Category: true;
-    stock: {
-      include: {
-        warhouse: true;
-      };
-    };
-  };
-}>;
+import { ProductWithStock } from "@/interface";
 
 export function DataTable({ data }: { data: ProductWithStock[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -84,7 +71,6 @@ export function DataTable({ data }: { data: ProductWithStock[] }) {
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
   const [openDelete, setOpenDelete] = React.useState(false);
-  const [openDetail, setOpenDetail] = React.useState(false);
   const [selectedRow, setSelectedRow] = React.useState<string>();
   const { toast } = useToast();
   const products = data;
@@ -132,8 +118,7 @@ export function DataTable({ data }: { data: ProductWithStock[] }) {
           <div
             className="flex gap-1 cursor-pointer"
             onClick={() => {
-              setSelectedRow(product.product_id);
-              setOpenDetail(true);
+              router.push(`/dashboard/product/${product.product_id}`);
             }}
           >
             <div className="rounded overflow-hidden">
@@ -202,6 +187,12 @@ export function DataTable({ data }: { data: ProductWithStock[] }) {
           </div>
         );
       },
+    },
+    {
+      id: "inputBy",
+      header: "Input By",
+      enableHiding: true,
+      accessorKey: "inputby",
     },
     {
       id: "actions",
@@ -275,13 +266,6 @@ export function DataTable({ data }: { data: ProductWithStock[] }) {
       enableHiding: false,
       cell: ({ row }) => {
         const product = row.original;
-        const deleteMutation = useMutation({
-          mutationKey: ["deleteProduct"],
-          mutationFn: async (id: string) => await deleteProduct(id),
-          onSuccess: () => {
-            alert("Product deleted!");
-          },
-        });
 
         return (
           <DropdownMenu>
@@ -305,7 +289,7 @@ export function DataTable({ data }: { data: ProductWithStock[] }) {
               <DropdownMenuItem
                 onClick={() => {
                   setSelectedRow(product.product_id);
-                  setOpenDetail(true);
+                  router.push(`/dashboard/product/${product.product_id}`);
                 }}
                 className="flex gap-2"
               >
@@ -377,16 +361,16 @@ export function DataTable({ data }: { data: ProductWithStock[] }) {
   React.useEffect(() => {
     if (!selectedRow) return;
     productQuery.refetch();
-  }, [selectedRow]);
+  }, [selectedRow, productQuery]);
 
   return (
     <div className="w-full mt-4">
       <div className="flex items-center py-4">
         <Input
-          placeholder="Filter emails..."
-          value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
+          placeholder="Filter products..."
+          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("email")?.setFilterValue(event.target.value)
+            table.getColumn("name")?.setFilterValue(event.target.value)
           }
           className="max-w-sm h-9"
         />
@@ -512,39 +496,6 @@ export function DataTable({ data }: { data: ProductWithStock[] }) {
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={openDetail}>
-        <AlertDialogContent>
-          {productQuery.isLoading ? (
-            <AlertDialogHeader>
-              <Loading />
-            </AlertDialogHeader>
-          ) : (
-            <>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{productQuery.data?.name}</AlertDialogTitle>
-                <AlertDialogDescription>
-                  <p>{productQuery.data?.description}</p>
-                  <ul>
-                    {productQuery.data?.stock.map((stock, i) => {
-                      return (
-                        <li key={i}>
-                          {stock.warhouse.name} : {stock.total}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setOpenDetail(false)}>
-                  Close
-                </AlertDialogCancel>
-              </AlertDialogFooter>
-            </>
-          )}
         </AlertDialogContent>
       </AlertDialog>
     </div>

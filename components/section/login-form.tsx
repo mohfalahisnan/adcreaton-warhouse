@@ -1,6 +1,8 @@
 "use client";
 import { signIn } from "next-auth/react";
 import { ChangeEvent, FormEvent, useState } from "react";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
 
 type LoginInput = {
   username: string;
@@ -29,8 +31,8 @@ export default function LoginForm() {
   };
   return (
     <>
-      <div className="flex min-h-full flex-1 flex-col justify-center">
-        <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+      <div className="w-full min-w-60 flex min-h-full flex-1 flex-col justify-center">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label
@@ -40,7 +42,7 @@ export default function LoginForm() {
                 Username
               </label>
               <div className="mt-2">
-                <input
+                <Input
                   id="username"
                   name="username"
                   type="text"
@@ -48,7 +50,6 @@ export default function LoginForm() {
                   required
                   value={inputs.username || ""}
                   onChange={handleChange}
-                  className="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
               </div>
             </div>
@@ -63,7 +64,7 @@ export default function LoginForm() {
                 </label>
               </div>
               <div className="mt-2">
-                <input
+                <Input
                   id="password"
                   name="password"
                   type="password"
@@ -71,18 +72,14 @@ export default function LoginForm() {
                   required
                   value={inputs.password || ""}
                   onChange={handleChange}
-                  className="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 />
               </div>
             </div>
 
             <div>
-              <button
-                type="submit"
-                className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
+              <Button type="submit" className="w-full">
                 Sign in
-              </button>
+              </Button>
             </div>
           </form>
         </div>

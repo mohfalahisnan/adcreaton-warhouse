@@ -18,8 +18,8 @@ const Sidebar = (props: Props) => {
   const strg = useLocalStorage("warehouse-id", value);
   useEffect(() => {
     strg[1](value);
-  }, [value]);
-  useEffect(() => {}, []);
+  }, [value, strg]);
+
   return (
     <div className="hidden md:flex flex-col flex-shrink-0 min-h-screen bg-foreground text-background w-52">
       <div className="flex flex-col items-center justify-center p-4">

@@ -15,19 +15,17 @@ datasource db {
 
 model User {
   user_id    String  @id @default(uuid())
-  username   String?
+  username   String? @unique
   password   String?
   name       String
-  email      String?
+  email      String? @unique
   phone      String?
   creditcard String?
   position   String?
 
   role Role @default(EMPLOYEE)
 
-  warehouse_id Int
-  warehouse    Warehouse     @relation(fields: [warehouse_id], references: [warehouse_id])
-  transaction  Transaction[]
+  transaction Transaction[]
 
   inputby   String
   createdAt DateTime @default(now())
@@ -73,8 +71,6 @@ model Warehouse {
   warehouse_id Int    @id @default(autoincrement())
   name         String
   location     String
-
-  user User[]
 
   customer Customer[]
   stock    Stock[]

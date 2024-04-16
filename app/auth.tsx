@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import { authConfig } from "./auth.config";
 import Credentials from "next-auth/providers/credentials";
+import { loginUser } from "@/lib/actions/accounts";
 
 export const {
   auth,
@@ -17,15 +18,21 @@ export const {
         password: { label: "password", type: "password" },
       },
       async authorize(credentials) {
-        if (
-          credentials.username === "admin" &&
-          credentials.password === "asd"
-        ) {
-          return {
-            name: "admin",
-            email: "email@email.com",
-          };
+        const user = await loginUser({
+          username: credentials.username as string,
+          password: credentials.password as string,
+        });
+
+        if (!user) {
+          return null;
         } else {
+          if (user.status === "success") {
+            return {
+              id: user.data?.user_id,
+              email: user.data?.email,
+              name: user.data?.name,
+            };
+          }
           return null;
         }
       },

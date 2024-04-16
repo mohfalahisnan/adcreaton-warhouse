@@ -17,20 +17,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2, Plus, Save, Trash } from "lucide-react";
 import { addProduct } from "@/lib/actions/products";
 import { Product } from "@prisma/client";
-import { ToastAction } from "@/components/ui/toast";
 import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-type Props = {};
+import { ITierPrice } from "@/interface";
+import { useSession } from "next-auth/react";
 
-export interface ITierPrice {
-  id: number;
-  from: number;
-  to: number;
-  price: number;
-}
-
-const ProductForm = (props: Props) => {
+const ProductForm = () => {
+  const session = useSession();
+  if (!session) return null;
   const { toast } = useToast();
   const [tierPrice, setTierPrice] = useState<ITierPrice[]>([
     { id: 0, from: 0, to: 0, price: 0 },
@@ -67,7 +62,7 @@ const ProductForm = (props: Props) => {
         ),
       });
     },
-    onError(error, variables, context) {
+    onError(error) {
       toast({
         title: `Error: ${error.message}`,
         description: `${error.message}`,
@@ -78,12 +73,15 @@ const ProductForm = (props: Props) => {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { inputby: "123", image: "/products/product-1.jpg" },
+    defaultValues: {
+      inputby: session.data?.user?.name as string,
+      image: "/products/product-1.jpg",
+    },
   });
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    values.inputby = session.data?.user?.name as string;
     values.tier_price = JSON.stringify(tierPrice);
-    values.image = "/products/product-1.jpg";
-    // values.inputby = "123";
     productMutation.mutate(values as Product);
   }
 
@@ -231,7 +229,7 @@ const ProductForm = (props: Props) => {
                       )}
                       {tierPrice?.map((_, i) => {
                         return (
-                          <div className="grid grid-cols-4 gap-2 mb-2">
+                          <div className="grid grid-cols-4 gap-2 mb-2" key={i}>
                             <Input
                               type="number"
                               placeholder="0"
