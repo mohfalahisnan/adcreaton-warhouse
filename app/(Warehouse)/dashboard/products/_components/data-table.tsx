@@ -65,7 +65,7 @@ import { ProductWithStock } from "@/interface";
 export function DataTable({ data }: { data: ProductWithStock[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
+    [],
   );
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -200,7 +200,6 @@ export function DataTable({ data }: { data: ProductWithStock[] }) {
       header: "Status",
       cell: ({ row }) => {
         const product = row.original;
-
         return (
           <div>
             {product.stock.map((stock, i) => {
@@ -413,7 +412,7 @@ export function DataTable({ data }: { data: ProductWithStock[] }) {
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </TableHead>
                   );
@@ -432,7 +431,7 @@ export function DataTable({ data }: { data: ProductWithStock[] }) {
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}

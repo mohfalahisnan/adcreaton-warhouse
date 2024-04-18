@@ -1,15 +1,13 @@
 "use client";
 import React from "react";
 import { useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
-import { getUserByEmail } from "@/lib/actions/accounts";
 import { useGetUserByEmail } from "@/hook/useUser";
 
 type Props = {};
 
 const Page = (props: Props) => {
   const { data, status } = useSession();
-  const userEmail = data?.user?.email; // Simpan alamat email dalam variabel
+  const userEmail = data?.user?.email;
   const user = useGetUserByEmail({
     email: userEmail as string,
     queryConfig: {
