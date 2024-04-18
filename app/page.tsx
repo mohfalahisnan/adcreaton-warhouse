@@ -9,8 +9,8 @@ export default async function Home() {
   return (
     <div>
       <LoginButton />
-      {/* <CreateUser /> */}
       {session && <LogoutButton />}
+      <div>Testing</div>
     </div>
   );
 }
