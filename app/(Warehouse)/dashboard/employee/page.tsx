@@ -1,6 +1,9 @@
 "use client";
 import { useGetEmployee } from "@/hook/useEmployee";
 import React from "react";
+import TableEmployee from "./TableEmployee";
+import Loading from "@/components/Loading";
+import { Card } from "@/components/ui/card";
 
 type Props = {};
 
@@ -9,15 +12,14 @@ const Page = (props: Props) => {
   return (
     <div>
       {isLoading ? (
-        "Loading..."
+        <Loading />
       ) : (
         <>
-          {data &&
-            data.map((user, index) => (
-              <h3 key={index}>
-                {user.name} {user.email} {user.position}
-              </h3>
-            ))}
+          {data && (
+            <Card>
+              <TableEmployee data={data} />
+            </Card>
+          )}
         </>
       )}
     </div>
