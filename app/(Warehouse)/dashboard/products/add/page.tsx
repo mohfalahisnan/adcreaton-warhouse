@@ -22,6 +22,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { ITierPrice } from "@/interface";
 import { useSession } from "next-auth/react";
+import { useGetCategory } from "@/hook/useCategory";
+
+import SelectCategory from "@/components/SelectCategory";
 
 const ProductForm = () => {
   const session = useSession();
@@ -30,17 +33,10 @@ const ProductForm = () => {
     { id: 0, from: 0, to: 0, price: 0 },
   ]);
   const router = useRouter();
-  const formSchema = z.object({
-    image: z.string(),
-    name: z.string().min(6).max(100),
-    description: z.string().min(10).max(1000),
-    sell_price: z.number(),
-    buy_price: z.number(),
-    tier_price: z.string().optional(),
-    inputby: z.string(),
-  });
-  const queryClient = useQueryClient();
 
+  // Query functiono
+  const category = useGetCategory({});
+  const queryClient = useQueryClient();
   const productMutation = useMutation({
     mutationFn: async (values: Product) => await addProduct(values),
     onSuccess: (prod) => {
@@ -68,6 +64,18 @@ const ProductForm = () => {
         variant: "destructive",
       });
     },
+  });
+
+  // Form Function
+  const formSchema = z.object({
+    image: z.string(),
+    name: z.string().min(6).max(100),
+    description: z.string().min(10).max(1000),
+    sell_price: z.number(),
+    buy_price: z.number(),
+    tier_price: z.string().optional(),
+    inputby: z.string(),
+    category_id: z.number(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -164,6 +172,21 @@ const ProductForm = () => {
                         placeholder="Product Name"
                         {...field}
                       />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Field for category */}
+              <FormField
+                control={form.control}
+                name="category_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <FormControl>
+                      <SelectCategory data={category.data || []} form={form} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
