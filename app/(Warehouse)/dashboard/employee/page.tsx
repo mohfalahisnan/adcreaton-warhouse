@@ -4,24 +4,20 @@ import React from "react";
 import TableEmployee from "./TableEmployee";
 import Loading from "@/components/Loading";
 import { Card } from "@/components/ui/card";
+import Condition from "@/components/Condition";
 
-type Props = {};
-
-const Page = (props: Props) => {
+const Page = () => {
   const { data, isLoading } = useGetEmployee({});
   return (
     <div>
-      {isLoading ? (
+      <Condition show={isLoading}>
         <Loading />
-      ) : (
-        <>
-          {data && (
-            <Card>
-              <TableEmployee data={data} />
-            </Card>
-          )}
-        </>
-      )}
+      </Condition>
+      <Condition show={!isLoading}>
+        <Card className="p-4">
+          <TableEmployee data={data || []} />
+        </Card>
+      </Condition>
     </div>
   );
 };

@@ -5,6 +5,8 @@ import React from "react";
 import { DataTable } from "./_components/data-table";
 import Link from "next/link";
 import { useGetProducts } from "@/hook/useProduct";
+import Condition from "@/components/Condition";
+import Loading from "./loading";
 
 const Page = async () => {
   const { data, isLoading } = useGetProducts();
@@ -35,7 +37,15 @@ const Page = async () => {
           </div>
         </div>
       </div>
-      <div>{isLoading ? "Loading..." : <DataTable data={data || []} />}</div>
+
+      <div>
+        <Condition show={isLoading}>
+          <Loading />
+        </Condition>
+        <Condition show={!isLoading}>
+          <DataTable data={data || []} />
+        </Condition>
+      </div>
     </div>
   );
 };
