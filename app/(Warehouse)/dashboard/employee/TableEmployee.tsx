@@ -1,5 +1,6 @@
 import DeleteAlert from "@/components/DeleteAlert";
 import { ResponsiveDialog } from "@/components/ResponsiveDialog";
+import { queryClient } from "@/components/provider";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,8 +27,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useToast } from "@/components/ui/use-toast";
+import { useDeleteEmployee } from "@/hook/useEmployee";
 import { User } from "@prisma/client";
-import { EyeIcon, MoreVertical, PencilIcon, TrashIcon } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import {
+  CheckCircle2,
+  EyeIcon,
+  MoreVertical,
+  PencilIcon,
+  TrashIcon,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 type Props = {
@@ -37,9 +48,41 @@ type Props = {
 const TableEmployee = ({ data }: Props) => {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string>();
-  const handleDelete = (id: string) => {
-    console.log(id);
+  const { toast } = useToast();
+  const router = useRouter();
+  const deleteQuery = useDeleteEmployee({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employee"] });
+      router.refresh();
+      setOpen(false);
+      toast({
+        description: (
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <span className="text-green-500">
+                <CheckCircle2 size={28} strokeWidth={1} />
+              </span>
+            </div>
+            <div>
+              <h3 className="text-lg">Product Added!</h3>
+            </div>
+          </div>
+        ),
+      });
+    },
+    onError(error) {
+      toast({
+        title: `Error: ${error.message}`,
+        description: `${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDelete = async (id: string) => {
+    deleteQuery.mutate(id);
   };
+
   return (
     <>
       <Table>
@@ -85,9 +128,9 @@ const TableEmployee = ({ data }: Props) => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                      <DropdownMenuItem className="flex flex-row gap-2">
+                      {/* <DropdownMenuItem className="flex flex-row gap-2">
                         <EyeIcon size={14} /> Detail
-                      </DropdownMenuItem>
+                      </DropdownMenuItem> */}
                       <DropdownMenuItem className="flex flex-row gap-2">
                         <PencilIcon size={14} /> Edit
                       </DropdownMenuItem>
@@ -116,7 +159,7 @@ const TableEmployee = ({ data }: Props) => {
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete your
               account and remove your data from our servers.
-              {selected}
+              {/* {selected} */}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

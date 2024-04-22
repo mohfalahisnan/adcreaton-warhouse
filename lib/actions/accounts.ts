@@ -90,10 +90,23 @@ export const getAllEmployee = async (): Promise<User[]> => {
   }
 };
 
-export const inputEmployee = async (data: User): Promise<User> => {
+export const addEmployee = async (data: User): Promise<User> => {
   try {
     const user = await prisma.user.create({
       data: data,
+    });
+    return user;
+  } catch (error) {
+    throw new Error();
+  }
+};
+
+export const deleteUser = async (id: string) => {
+  try {
+    const user = await prisma.user.delete({
+      where: {
+        user_id: id,
+      },
     });
     return user;
   } catch (error) {

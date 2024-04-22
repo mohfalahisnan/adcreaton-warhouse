@@ -21,7 +21,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { addEmployee } from "@/lib/actions/accounts";
 
-const EmployeeForm = () => {
+const EmployeeForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const session = useSession();
   const { toast } = useToast();
   const router = useRouter();
@@ -33,6 +33,9 @@ const EmployeeForm = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employee"] });
       router.refresh();
+      if (onSuccess) {
+        onSuccess();
+      }
       toast({
         description: (
           <div className="flex items-center justify-between gap-2">

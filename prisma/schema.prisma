@@ -14,44 +14,42 @@ datasource db {
 }
 
 model User {
-  user_id    String  @id @default(uuid())
-  username   String? @unique
-  password   String?
-  name       String
-  email      String? @unique
-  phone      String?
-  creditcard String?
-  position   String?
-
-  role Role @default(EMPLOYEE)
-
-  transaction Transaction[]
-
-  inputby   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  user_id      String        @id @default(uuid())
+  image        String?
+  username     String?       @unique
+  password     String?
+  name         String
+  email        String?       @unique
+  phone        String?
+  creditcard   String?
+  position     String?
+  role         Role          @default(EMPLOYEE)
+  transaction  Transaction[]
+  warehouse_id Int?
+  warehouse    Warehouse?    @relation(fields: [warehouse_id], references: [warehouse_id])
+  inputby      String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 }
 
 model Customer {
-  customer_id Int     @id @default(autoincrement())
-  name        String
-  alamat      String?
-  phone       String
-
+  customer_id  Int       @id @default(autoincrement())
+  name         String
+  alamat       String?
+  phone        String
   warehouse_id Int
   warehouse    Warehouse @relation(fields: [warehouse_id], references: [warehouse_id])
 }
 
 model Transaction {
-  transaction_id   String @id @default(uuid())
+  transaction_id   String   @id @default(uuid())
   transaction_code String
   user_id          String
-  sales_name       User   @relation(references: [user_id], fields: [user_id])
+  sales_name       User     @relation(references: [user_id], fields: [user_id])
   Cart             Cart[]
   total            String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model Cart {
@@ -74,6 +72,7 @@ model Warehouse {
 
   customer Customer[]
   stock    Stock[]
+  user     User[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -56,7 +56,7 @@ export function ResponsiveDialog({
             <Button variant="outline">{triggerTitle}</Button>
           )}
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="capitalize">{title}</DialogTitle>
             <DialogDescription>{description}</DialogDescription>

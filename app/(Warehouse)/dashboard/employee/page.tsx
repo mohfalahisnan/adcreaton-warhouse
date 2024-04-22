@@ -1,6 +1,6 @@
 "use client";
 import { useGetEmployee } from "@/hook/useEmployee";
-import React from "react";
+import React, { useState } from "react";
 import TableEmployee from "./TableEmployee";
 import Loading from "@/components/Loading";
 import {
@@ -11,11 +11,13 @@ import {
 } from "@/components/ui/card";
 import Condition from "@/components/Condition";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { Plus } from "lucide-react";
+import { ResponsiveDialog } from "@/components/ResponsiveDialog";
+import EmployeeForm from "@/components/EmployeeForm";
 
 const Page = () => {
   const { data, isLoading } = useGetEmployee({});
+  const [open, setOpen] = useState(false);
   return (
     <div>
       <Condition show={isLoading}>
@@ -24,16 +26,25 @@ const Page = () => {
       <Condition show={!isLoading}>
         <div className="flex justify-end items-center mb-4">
           <div className="flex gap-2">
-            <Button
-              variant={"secondary"}
-              asChild
-              size={"sm"}
-              className="flex items-center gap-2"
+            <ResponsiveDialog
+              title="Add Employee"
+              description=""
+              triggerContent={
+                <Button
+                  variant={"secondary"}
+                  size={"sm"}
+                  className="flex items-center gap-2"
+                >
+                  <Plus size={12} /> Employee
+                </Button>
+              }
+              open={open}
+              onOpenChange={setOpen}
             >
-              <Link href={"/dashboard/employee/add"}>
-                <Plus size={12} /> Employee
-              </Link>
-            </Button>
+              <div className="max-h-[70vh] overflow-auto">
+                <EmployeeForm onSuccess={() => setOpen(false)} />
+              </div>
+            </ResponsiveDialog>
           </div>
         </div>
         <Card className="p-4">

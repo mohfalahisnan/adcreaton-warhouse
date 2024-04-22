@@ -1,5 +1,9 @@
 import { UseQueryConfig } from "@/interface";
-import { getAllEmployee, inputEmployee } from "@/lib/actions/accounts";
+import {
+  getAllEmployee,
+  addEmployee,
+  deleteUser,
+} from "@/lib/actions/accounts";
 import { User } from "@prisma/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
@@ -9,7 +13,7 @@ export const useGetEmployee = ({
   queryConfig?: UseQueryConfig;
 }) => {
   return useQuery<User[]>({
-    queryKey: ["users"],
+    queryKey: ["employee"],
     queryFn: async () => await getAllEmployee(),
     ...queryConfig,
   });
@@ -26,7 +30,21 @@ export const useInputEmployee = ({
   data.role = "EMPLOYEE";
   return useMutation({
     mutationKey: ["inputEmployee"],
-    mutationFn: async () => inputEmployee(data),
+    mutationFn: async () => addEmployee(data),
+    onSuccess: onSuccess,
+    onError: onError,
+  });
+};
+
+export const useDeleteEmployee = ({
+  onSuccess,
+  onError,
+}: {
+  onSuccess: (any: any) => void;
+  onError: (any: any) => void;
+}) => {
+  return useMutation({
+    mutationFn: async (id: string) => await deleteUser(id),
     onSuccess: onSuccess,
     onError: onError,
   });
