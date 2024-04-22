@@ -8,7 +8,7 @@ import { useGetProducts } from "@/hook/useProduct";
 import Condition from "@/components/Condition";
 import Loading from "./loading";
 
-const Page = async () => {
+const Page = () => {
   const { data, isLoading } = useGetProducts();
 
   return (

@@ -89,3 +89,14 @@ export const getAllEmployee = async (): Promise<User[]> => {
     throw new Error();
   }
 };
+
+export const inputEmployee = async (data: User): Promise<User> => {
+  try {
+    const user = await prisma.user.create({
+      data: data,
+    });
+    return user;
+  } catch (error) {
+    throw new Error();
+  }
+};

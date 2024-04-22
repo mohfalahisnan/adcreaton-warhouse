@@ -10,6 +10,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Condition from "@/components/Condition";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 
 const Page = () => {
   const { data, isLoading } = useGetEmployee({});
@@ -19,6 +22,20 @@ const Page = () => {
         <Loading />
       </Condition>
       <Condition show={!isLoading}>
+        <div className="flex justify-end items-center mb-4">
+          <div className="flex gap-2">
+            <Button
+              variant={"secondary"}
+              asChild
+              size={"sm"}
+              className="flex items-center gap-2"
+            >
+              <Link href={"/dashboard/employee/add"}>
+                <Plus size={12} /> Employee
+              </Link>
+            </Button>
+          </div>
+        </div>
         <Card className="p-4">
           <CardHeader>
             <CardTitle>Employee</CardTitle>

@@ -1,4 +1,5 @@
 import DeleteAlert from "@/components/DeleteAlert";
+import { ResponsiveDialog } from "@/components/ResponsiveDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,7 +58,18 @@ const TableEmployee = ({ data }: Props) => {
             return (
               <TableRow key={i + item.user_id}>
                 <TableCell className="text-center w-8">{i + 1}</TableCell>
-                <TableCell>{item.name}</TableCell>
+                <TableCell>
+                  <ResponsiveDialog
+                    title={item.name}
+                    description=""
+                    triggerContent={<h3 className="capitalize">{item.name}</h3>}
+                    actionButtons={<Button>Print</Button>}
+                  >
+                    Nama: {item.name}
+                    <br />
+                    Phone: {item.phone}
+                  </ResponsiveDialog>
+                </TableCell>
                 <TableCell>{item.phone || "-"}</TableCell>
                 <TableCell className="hidden md:table-cell">
                   {item.email || "-"}
