@@ -39,7 +39,7 @@ const ProductForm = () => {
   const queryClient = useQueryClient();
   const productMutation = useMutation({
     mutationFn: async (values: Product) => await addProduct(values),
-    onSuccess: (prod) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       router.push("/dashboard/products");
       toast({
@@ -81,12 +81,13 @@ const ProductForm = () => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      inputby: session.data?.user?.name as string,
+      inputby: session.data?.user?.name || "",
       image: "/products/product-1.jpg",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    console.log("exec");
     values.inputby = session.data?.user?.name as string;
     values.tier_price = JSON.stringify(tierPrice);
     productMutation.mutate(values as Product);
@@ -130,13 +131,8 @@ const ProductForm = () => {
                 name="image"
                 render={({ field }) => (
                   <FormItem className="hidden">
-                    <FormLabel>Product Name</FormLabel>
                     <FormControl>
-                      <Input
-                        type="text"
-                        placeholder="Product Name"
-                        {...field}
-                      />
+                      <Input type="text" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -147,11 +143,10 @@ const ProductForm = () => {
                 name="inputby"
                 render={({ field }) => (
                   <FormItem className="hidden">
-                    <FormLabel>Product Name</FormLabel>
                     <FormControl>
                       <Input
                         type="text"
-                        placeholder="Product Name"
+                        defaultValue={session.data?.user?.name as string}
                         {...field}
                       />
                     </FormControl>
