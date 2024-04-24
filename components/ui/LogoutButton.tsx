@@ -7,7 +7,7 @@ const LogoutButton = () => {
   return (
     <div className="flex gap-2">
       <Button asChild>
-        <Link href={"/dashboard"}>Dashboard</Link>
+        <Link href={"http://93.127.167.50:3000/dashboard"}>Dashboard</Link>
       </Button>
       <form
         action={async () => {
