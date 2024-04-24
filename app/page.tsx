@@ -10,7 +10,8 @@ export default async function Home() {
     <div className="w-full h-screen flex items-center justify-center gap-4">
       <LoginButton />
       {session && <LogoutButton />}
-      <CreateUser />
+
+      {/* <CreateUser /> */}
     </div>
   );
 }
