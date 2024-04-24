@@ -1,4 +1,5 @@
-import { File, ListFilter } from "lucide-react";
+"use client";
+import { File, ListFilter, Plus } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,10 +27,41 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Link from "next/link";
+import { ResponsiveDialog } from "@/components/ResponsiveDialog";
+import EmployeeForm from "@/components/EmployeeForm";
+import { useState } from "react";
+import TransactionForm from "@/components/TransactionForm";
 
 export default function Dashboard() {
+  const [open, setOpen] = useState(false);
   return (
     <main>
+      <div className="mb-4">
+        <div className="flex justify-end items-center">
+          <div className="flex gap-2">
+            <ResponsiveDialog
+              title="New Transaction"
+              description=""
+              triggerContent={
+                <Button
+                  variant={"secondary"}
+                  size={"sm"}
+                  className="flex items-center gap-2"
+                >
+                  <Plus size={12} /> Transaction
+                </Button>
+              }
+              open={open}
+              onOpenChange={setOpen}
+            >
+              <div className="max-h-[70vh] overflow-auto">
+                <TransactionForm onSuccess={() => setOpen(false)} />
+              </div>
+            </ResponsiveDialog>
+          </div>
+        </div>
+      </div>
       <Tabs defaultValue="week">
         <div className="flex items-center">
           <TabsList>

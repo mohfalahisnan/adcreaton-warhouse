@@ -10,6 +10,7 @@ import {
 import { Button } from "../ui/button";
 import SidebarNavigation from "./sidebar-navigation";
 import { useLocalStorage } from "@/hook/useLocalstorage";
+import Image from "next/image";
 
 type Props = {};
 
@@ -23,8 +24,14 @@ const Sidebar = (props: Props) => {
   return (
     <div className="hidden md:flex flex-col flex-shrink-0 min-h-screen bg-foreground text-background w-52">
       <div className="flex flex-col items-center justify-center p-4">
-        <div className="text-left text-xl w-full mb-4 font-bold">
-          Dashboard<span className="text-primary text-3xl">.</span>
+        <div className="text-center text-xl w-full mb-4 font-bold">
+          <Image
+            src={"/logo.png"}
+            width={200}
+            height={100}
+            alt="logo"
+            className="w-3/4"
+          />
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
