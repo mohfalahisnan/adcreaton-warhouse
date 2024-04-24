@@ -3,7 +3,7 @@ module.exports = {
     {
       name: "next-app",
       script: "npm",
-      args: "dev",
+      args: "run dev",
       env: {
         NODE_ENV: "development",
       },
