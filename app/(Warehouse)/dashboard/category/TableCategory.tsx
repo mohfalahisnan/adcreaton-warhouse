@@ -1,4 +1,3 @@
-import DeleteAlert from "@/components/DeleteAlert";
 import { ResponsiveDialog } from "@/components/ResponsiveDialog";
 import { queryClient } from "@/components/provider";
 import {
@@ -10,7 +9,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,12 +26,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
-import { useDeleteEmployee } from "@/hook/useEmployee";
-import { User } from "@prisma/client";
-import { useMutation } from "@tanstack/react-query";
+import { useDeleteCategory } from "@/hook/useCategory";
+import { Category } from "@prisma/client";
 import {
   CheckCircle2,
-  EyeIcon,
   MoreVertical,
   PencilIcon,
   TrashIcon,
@@ -42,17 +38,17 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 type Props = {
-  data: User[];
+  data: Category[];
 };
 
-const TableEmployee = ({ data }: Props) => {
+const TableCategory = ({ data }: Props) => {
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<string>();
+  const [selected, setSelected] = useState<number>(0);
   const { toast } = useToast();
   const router = useRouter();
-  const deleteQuery = useDeleteEmployee({
+  const deleteQuery = useDeleteCategory({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["employee"] });
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
       router.refresh();
       setOpen(false);
       toast({
@@ -64,7 +60,7 @@ const TableEmployee = ({ data }: Props) => {
               </span>
             </div>
             <div>
-              <h3 className="text-lg">Product Added!</h3>
+              <h3 className="text-lg">Category deleted!</h3>
             </div>
           </div>
         ),
@@ -79,7 +75,7 @@ const TableEmployee = ({ data }: Props) => {
     },
   });
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: number) => {
     deleteQuery.mutate(id);
   };
 
@@ -90,36 +86,17 @@ const TableEmployee = ({ data }: Props) => {
           <TableRow>
             <TableHead>No</TableHead>
             <TableHead>Name</TableHead>
-            <TableHead>Phone</TableHead>
-            <TableHead className="hidden md:table-cell">Email</TableHead>
-            <TableHead className="hidden md:table-cell">Position</TableHead>
+            <TableHead>Description</TableHead>
             <TableHead></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.map((item, i) => {
             return (
-              <TableRow key={i + item.user_id}>
+              <TableRow key={i + item.category_id}>
                 <TableCell className="text-center w-8">{i + 1}</TableCell>
-                <TableCell>
-                  <ResponsiveDialog
-                    title={item.name}
-                    description=""
-                    triggerContent={<h3 className="capitalize">{item.name}</h3>}
-                    actionButtons={<Button>Print</Button>}
-                  >
-                    Nama: {item.name}
-                    <br />
-                    Phone: {item.phone}
-                  </ResponsiveDialog>
-                </TableCell>
-                <TableCell>{item.phone || "-"}</TableCell>
-                <TableCell className="hidden md:table-cell">
-                  {item.email || "-"}
-                </TableCell>
-                <TableCell className="hidden md:table-cell">
-                  {item.position || "-"}
-                </TableCell>
+                <TableCell>{item.name}</TableCell>
+                <TableCell>{item.description}</TableCell>
                 <TableCell className="text-right w-5">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -138,7 +115,7 @@ const TableEmployee = ({ data }: Props) => {
                       <DropdownMenuItem
                         onClick={() => {
                           setOpen(true);
-                          setSelected(item.user_id);
+                          setSelected(item.category_id);
                         }}
                         className="flex flex-row gap-2 text-red-500"
                       >
@@ -166,12 +143,12 @@ const TableEmployee = ({ data }: Props) => {
             <AlertDialogCancel
               onClick={() => {
                 setOpen(false);
-                setSelected(undefined);
+                setSelected(0);
               }}
             >
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction onClick={() => handleDelete(selected as string)}>
+            <AlertDialogAction onClick={() => handleDelete(selected)}>
               Continue
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -181,4 +158,4 @@ const TableEmployee = ({ data }: Props) => {
   );
 };
 
-export default TableEmployee;
+export default TableCategory;

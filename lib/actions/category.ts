@@ -23,3 +23,17 @@ export const getCategory = async () => {
     throw new Error("Failed to fetch");
   }
 };
+
+export const deleteCategory = async (id: number) => {
+  try {
+    const category = await prisma.category.delete({
+      where: {
+        category_id: id,
+      },
+    });
+    return category;
+  } catch (error) {
+    console.log(error);
+    throw new Error("Failed to fetch");
+  }
+};

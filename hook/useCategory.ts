@@ -1,8 +1,8 @@
 "use client";
 import { UseQueryConfig } from "@/interface";
-import { getCategory } from "@/lib/actions/category";
+import { deleteCategory, getCategory } from "@/lib/actions/category";
 import { Category } from "@prisma/client";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 export const useGetCategory = ({
   queryConfig,
@@ -13,5 +13,19 @@ export const useGetCategory = ({
     queryKey: ["categories"],
     queryFn: async () => await getCategory(),
     ...queryConfig,
+  });
+};
+
+export const useDeleteCategory = ({
+  onSuccess,
+  onError,
+}: {
+  onSuccess: (any: any) => void;
+  onError: (any: any) => void;
+}) => {
+  return useMutation({
+    mutationFn: async (id: number) => await deleteCategory(id),
+    onSuccess: onSuccess,
+    onError: onError,
   });
 };

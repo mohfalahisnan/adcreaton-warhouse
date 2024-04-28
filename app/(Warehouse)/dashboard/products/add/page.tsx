@@ -25,6 +25,8 @@ import { useSession } from "next-auth/react";
 import { useGetCategory } from "@/hook/useCategory";
 
 import SelectCategory from "@/components/SelectCategory";
+import { ResponsiveDialog } from "@/components/ResponsiveDialog";
+import CategoryForm from "@/components/CategoryForm";
 
 const ProductForm = () => {
   const session = useSession();
@@ -33,7 +35,7 @@ const ProductForm = () => {
     { id: 0, from: 0, to: 0, price: 0 },
   ]);
   const router = useRouter();
-
+  const [showFormCategory, setShowFormCategory] = useState(false);
   // Query functiono
   const category = useGetCategory({});
   const queryClient = useQueryClient();
@@ -181,7 +183,33 @@ const ProductForm = () => {
                   <FormItem>
                     <FormLabel>Category</FormLabel>
                     <FormControl>
-                      <SelectCategory data={category.data || []} form={form} />
+                      <div className="flex flex-row gap-2">
+                        <SelectCategory
+                          data={category.data || []}
+                          form={form}
+                        />
+                        <ResponsiveDialog
+                          title="Add Category"
+                          description=""
+                          triggerContent={
+                            <Button
+                              variant={"secondary"}
+                              size={"sm"}
+                              className="flex items-center gap-2"
+                            >
+                              <Plus size={12} /> Category
+                            </Button>
+                          }
+                          open={showFormCategory}
+                          onOpenChange={setShowFormCategory}
+                        >
+                          <div className="max-h-[70vh] overflow-auto">
+                            <CategoryForm
+                              onSuccess={() => setShowFormCategory(false)}
+                            />
+                          </div>
+                        </ResponsiveDialog>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
