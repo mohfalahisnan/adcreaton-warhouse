@@ -34,8 +34,12 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   }
   return (
     <div>
-      <div className="px-2">
-        <div className="pt-4">
+      <div className="mb-4 w-full flex flex-row justify-between">
+        <h2 className="text-lg">New Transaction</h2>
+        <Button>Save</Button>
+      </div>
+      <div className="flex flex-row gap-4">
+        <div className="w-full">
           <div className="relative">
             <Input
               type="text"
@@ -81,63 +85,57 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
               </div>
             </div>
           </div>
-          <div className="mt-4">
-            <Table className="text-xs">
-              <TableHeader className="bg-accent">
-                <TableRow>
-                  <TableHead className="w-12">No.</TableHead>
-                  <TableHead>Product</TableHead>
-                  <TableHead className="w-12">Qty</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="w-12"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {selected.length > 0 &&
-                  selected.map((item, i) => {
-                    return (
-                      <TableRow key={i}>
-                        <TableCell>{i + 1}</TableCell>
-                        <TableCell>{item.name}</TableCell>
-                        <TableCell>1</TableCell>
-                        <TableCell className="text-right">
-                          Rp. {item.sell_price}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Button
-                            variant={"outline"}
-                            size={"icon"}
-                            className="w-8 h-8"
-                          >
-                            <Trash size={16} />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-              </TableBody>
-              <TableFooter className="bg-accent">
-                <TableRow>
-                  <TableHead className="w-12">Total</TableHead>
-                  <TableHead></TableHead>
-                  <TableHead className="w-12"></TableHead>
-                  <TableHead className="text-right">
-                    Rp. {sumSellPrices(selected)}
-                  </TableHead>
-                  <TableHead className="w-12"></TableHead>
-                </TableRow>
-              </TableFooter>
-            </Table>
-            {selected.length <= 0 && (
-              <h4 className="text-center w-full">Empty</h4>
-            )}
-          </div>
-          <div className="w-full pt-4 flex justify-end">
-            <Button type="submit" className="flex gap-2">
-              <Save size={16} />
-              Save
-            </Button>
-          </div>
+        </div>
+        <div className="w-full">
+          <Table className="text-xs">
+            <TableHeader className="bg-accent">
+              <TableRow>
+                <TableHead className="w-12">No.</TableHead>
+                <TableHead>Product</TableHead>
+                <TableHead className="w-12">Qty</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+                <TableHead className="w-12"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {selected.length > 0 &&
+                selected.map((item, i) => {
+                  return (
+                    <TableRow key={i}>
+                      <TableCell>{i + 1}</TableCell>
+                      <TableCell>{item.name}</TableCell>
+                      <TableCell>1</TableCell>
+                      <TableCell className="text-right">
+                        Rp. {item.sell_price}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant={"outline"}
+                          size={"icon"}
+                          className="w-8 h-8"
+                        >
+                          <Trash size={16} />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+            </TableBody>
+            <TableFooter className="bg-accent">
+              <TableRow>
+                <TableHead className="w-12">Total</TableHead>
+                <TableHead></TableHead>
+                <TableHead className="w-12"></TableHead>
+                <TableHead className="text-right">
+                  Rp. {sumSellPrices(selected)}
+                </TableHead>
+                <TableHead className="w-12"></TableHead>
+              </TableRow>
+            </TableFooter>
+          </Table>
+          {selected.length <= 0 && (
+            <h4 className="text-center w-full">Empty</h4>
+          )}
         </div>
       </div>
     </div>

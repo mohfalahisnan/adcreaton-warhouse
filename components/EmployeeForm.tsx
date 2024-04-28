@@ -127,61 +127,63 @@ const EmployeeForm = ({ onSuccess }: { onSuccess?: () => void }) => {
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input type="text" placeholder="Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="flex w-full flex-row gap-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input type="text" placeholder="Name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type="text" placeholder="Email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="text" placeholder="Email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone</FormLabel>
-                    <FormControl>
-                      <Input type="text" placeholder="Phone" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="position"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Jabatan</FormLabel>
-                    <FormControl>
-                      <Input type="text" placeholder="Jabatan" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="flex flex-row gap-4">
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormLabel>Phone</FormLabel>
+                      <FormControl>
+                        <Input type="text" placeholder="Phone" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="position"
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormLabel>Jabatan</FormLabel>
+                      <FormControl>
+                        <Input type="text" placeholder="Jabatan" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <FormField
                 control={form.control}

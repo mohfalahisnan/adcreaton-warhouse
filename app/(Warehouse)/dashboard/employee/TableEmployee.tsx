@@ -1,4 +1,5 @@
 import DeleteAlert from "@/components/DeleteAlert";
+import EmployeeForm from "@/components/EmployeeForm";
 import { ResponsiveDialog } from "@/components/ResponsiveDialog";
 import { queryClient } from "@/components/provider";
 import {
@@ -10,7 +11,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,10 +30,8 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { useDeleteEmployee } from "@/hook/useEmployee";
 import { User } from "@prisma/client";
-import { useMutation } from "@tanstack/react-query";
 import {
   CheckCircle2,
-  EyeIcon,
   MoreVertical,
   PencilIcon,
   TrashIcon,
@@ -47,6 +45,7 @@ type Props = {
 
 const TableEmployee = ({ data }: Props) => {
   const [open, setOpen] = useState(false);
+  const [editForm, setEditForm] = useState(false);
   const [selected, setSelected] = useState<string>();
   const { toast } = useToast();
   const router = useRouter();
@@ -78,6 +77,8 @@ const TableEmployee = ({ data }: Props) => {
       });
     },
   });
+
+  const handleEdit = async (id: string) => {};
 
   const handleDelete = async (id: string) => {
     deleteQuery.mutate(id);
@@ -131,7 +132,11 @@ const TableEmployee = ({ data }: Props) => {
                       {/* <DropdownMenuItem className="flex flex-row gap-2">
                         <EyeIcon size={14} /> Detail
                       </DropdownMenuItem> */}
-                      <DropdownMenuItem className="flex flex-row gap-2">
+
+                      <DropdownMenuItem
+                        onClick={() => setEditForm(true)}
+                        className="flex flex-row gap-2"
+                      >
                         <PencilIcon size={14} /> Edit
                       </DropdownMenuItem>
 
@@ -171,7 +176,10 @@ const TableEmployee = ({ data }: Props) => {
             >
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction onClick={() => handleDelete(selected as string)}>
+            <AlertDialogAction
+              onClick={() => handleDelete(selected as string)}
+              className="bg-destructive hover:bg-destructive"
+            >
               Continue
             </AlertDialogAction>
           </AlertDialogFooter>

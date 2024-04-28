@@ -40,6 +40,15 @@ export default function Dashboard() {
       <div className="mb-4">
         <div className="flex justify-end items-center">
           <div className="flex gap-2">
+            <Link href={"/dashboard/transaction/add"}>
+              <Button
+                variant={"secondary"}
+                size={"sm"}
+                className="flex items-center gap-2"
+              >
+                <Plus size={12} /> Transaction
+              </Button>
+            </Link>
             <ResponsiveDialog
               title="New Transaction"
               description=""

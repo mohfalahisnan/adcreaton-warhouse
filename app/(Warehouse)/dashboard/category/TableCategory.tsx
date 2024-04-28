@@ -148,7 +148,10 @@ const TableCategory = ({ data }: Props) => {
             >
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction onClick={() => handleDelete(selected)}>
+            <AlertDialogAction
+              onClick={() => handleDelete(selected)}
+              className="bg-destructive hover:bg-destructive"
+            >
               Continue
             </AlertDialogAction>
           </AlertDialogFooter>
