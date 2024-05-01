@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import {
   Table,
@@ -12,10 +12,21 @@ import {
   TableHeader,
   TableRow,
 } from "./ui/table";
-import { Plus, Save, ShoppingBag, Trash, X } from "lucide-react";
+import { CheckCircle2, Plus, Save, ShoppingBag, Trash, X } from "lucide-react";
 import { useGetProducts } from "@/hook/useProduct";
-import { Product } from "@prisma/client";
+import { Order, OrderItem, Prisma, Product } from "@prisma/client";
 import { formatRupiah } from "@/lib/formatRupiah";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  addItem,
+  deleteOrderItem,
+  getOrderById,
+  initialOrder,
+} from "@/lib/actions/order";
+import { useToast } from "./ui/use-toast";
+import { queryClient } from "./provider";
+import { useRouter } from "next/navigation";
+import { generateOrderCode } from "@/lib/generateCode";
 
 export interface ISelectedProduct extends Product {
   count: number;
@@ -31,6 +42,79 @@ export interface TierPrice {
 const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const [selected, setSelected] = useState<ISelectedProduct[]>([]);
   const product = useGetProducts();
+  const { toast } = useToast();
+  const router = useRouter();
+  const [orderId, setOrderId] = useState<string>();
+  const [orderCode, setOrderCode] = useState<string>();
+
+  const queryOrder = useMutation({
+    mutationFn: async () =>
+      await initialOrder({
+        data: {
+          order_code: generateOrderCode(),
+          totalAmount: null,
+          user_id: null,
+          status: "ARCHIVED",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      }),
+    onSuccess: (data) => {
+      setOrderId(data.order_id);
+      setOrderCode(data.order_code);
+      toast({
+        description: (
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <span className="text-green-500">
+                <CheckCircle2 size={28} strokeWidth={1} />
+              </span>
+            </div>
+            <div>
+              <h3 className="text-lg">Order Created!</h3>
+            </div>
+          </div>
+        ),
+      });
+    },
+    onError(error) {
+      toast({
+        title: `Error: ${error.message}`,
+        description: `${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  interface IQueryItem {
+    quantity: number;
+    product: Product;
+    notes: string;
+  }
+
+  const queryItem = useMutation({
+    mutationFn: async (data: IQueryItem) => {
+      if (!orderId) return null;
+      await addItem({
+        data: {
+          product_id: data.product.product_id,
+          order_id: orderId,
+          quantity: data.quantity,
+          notes: data.notes,
+        },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["order", orderId] });
+    },
+    onError(error) {
+      toast({
+        title: `Error: ${error.message}`,
+        description: `${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
 
   function sumSellPrices(products: ISelectedProduct[]): number {
     let total = 0;
@@ -120,30 +204,30 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     );
   };
 
-  const deleteSelectedProductById = (productId: string) => {
-    const filter = selected.filter(
-      (product) => product.product_id !== productId
-    );
-    setSelected(filter);
-    return;
+  const handleAdd = async ({ item }: { item: IQueryItem }) => {
+    if (!orderId) {
+      queryOrder.mutateAsync().then(() => {
+        queryItem.mutate(item);
+      });
+    }
+    if (orderId) {
+      queryItem.mutate(item);
+    }
   };
 
-  const handleAdd = ({ item }: { item: ISelectedProduct }) => {
-    setSelected((data) => {
-      // Mencari index produk dalam array
-      const index = data.findIndex((p) => p.product_id === item.product_id);
+  const queryGetOrder = useQuery({
+    queryKey: ["order", orderId],
+    queryFn: async () => {
+      if (!orderId) return null;
+      return await getOrderById(orderId);
+    },
+  });
 
-      // Jika produk sudah ada, tambah count
-      if (index > -1) {
-        const newData = [...data];
-        newData[index] = { ...newData[index], count: newData[index].count + 1 };
-        return newData;
-      }
-
-      // Jika produk belum ada, tambahkan produk ke array dengan count awal
-      return [...data, { ...item, count: 1 }];
-    });
-  };
+  const queryDeleteOrder = useMutation({
+    mutationFn: async (id: string) => await deleteOrderItem(id),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["order", orderId] }),
+  });
 
   return (
     <div>
@@ -169,7 +253,13 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
                           size={"icon"}
                           className="w-8 h-8"
                           onClick={() =>
-                            handleAdd({ item: { ...item, count: 1 } })
+                            handleAdd({
+                              item: {
+                                product: item,
+                                quantity: 1,
+                                notes: "",
+                              },
+                            })
                           }
                         >
                           <Plus size={16} />
@@ -182,6 +272,12 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
           </Table>
         </div>
         <div className="w-full max-w-md">
+          {queryGetOrder.data && (
+            <h2 className="text-lg text-center font-medium">
+              ORDER ID : {queryGetOrder.data.order_code}
+              <span className="text-muted">{queryGetOrder.data.status}</span>
+            </h2>
+          )}
           <Table className="text-xs">
             <TableHeader className="bg-accent">
               <TableRow>
@@ -193,7 +289,7 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {selected.length > 0 &&
+              {/* {selected.length > 0 &&
                 selected.map((item, i) => {
                   return (
                     <TableRow key={i}>
@@ -225,14 +321,41 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
                       </TableCell>
                     </TableRow>
                   );
+                })} */}
+
+              {queryGetOrder.data &&
+                queryGetOrder.data.OrderItem.map((item, i) => {
+                  return (
+                    <TableRow key={i}>
+                      <TableCell>{i + 1}</TableCell>
+                      <TableCell>{item.product.name}</TableCell>
+                      <TableCell>{item.quantity}</TableCell>
+                      <TableCell className="text-right">
+                        Rp.{" "}
+                        {formatRupiah(item.product.sell_price * item.quantity)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant={"outline"}
+                          size={"icon"}
+                          className="w-8 h-8"
+                          onClick={() =>
+                            queryDeleteOrder.mutate(item.order_item_id)
+                          }
+                        >
+                          <Trash size={16} />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
                 })}
-              {selected.length <= 0 && (
+              {/* {selected.length <= 0 && (
                 <TableRow>
                   <TableCell>
                     <h4 className="text-center w-full">Empty</h4>
                   </TableCell>
                 </TableRow>
-              )}
+              )} */}
               <TableRow>
                 <TableCell></TableCell>
                 <TableCell>Sub Total</TableCell>
@@ -266,7 +389,6 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
           </Table>
         </div>
       </div>
-      <pre className="overflow-auto">{JSON.stringify(selected)}</pre>
     </div>
   );
 };

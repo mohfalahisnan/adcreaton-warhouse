@@ -30,15 +30,17 @@ model User {
   inputby      String
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  Order        Order[]
 }
 
 model Customer {
-  customer_id  Int       @id @default(autoincrement())
+  customer_id  Int        @id @default(autoincrement())
   name         String
   alamat       String?
   phone        String
   warehouse_id Int
-  warehouse    Warehouse @relation(fields: [warehouse_id], references: [warehouse_id])
+  warehouse    Warehouse  @relation(fields: [warehouse_id], references: [warehouse_id])
+  Shipment     Shipment[]
 }
 
 model Transaction {
@@ -65,6 +67,69 @@ model Cart {
   updatedAt DateTime @updatedAt
 }
 
+model Order {
+  order_id    String @id @default(uuid())
+  order_code  String @unique
+  totalAmount Float?
+
+  OrderItem  OrderItem[]
+  user_id    String?
+  sales_name User?       @relation(fields: [user_id], references: [user_id])
+  status     StatusOrder @default(PENDING)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model OrderItem {
+  order_item_id String  @id @default(uuid())
+  quantity      Float
+  product_id    String
+  product       Product @relation(fields: [product_id], references: [product_id])
+
+  notes    String?
+  Order    Order?  @relation(fields: [order_id], references: [order_id], onDelete: Cascade)
+  order_id String?
+}
+
+model Inbound {
+  inbound_id String    @id @default(uuid())
+  product    Product   @relation(fields: [product_id], references: [product_id])
+  quantity   Float
+  notes      String
+  warehouse  Warehouse @relation(fields: [warehouse_id], references: [warehouse_id])
+  confirm    Boolean   @default(false)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  product_id   String
+  warehouse_id Int
+}
+
+model Outbound {
+  outbound_id String    @id @default(uuid())
+  product     Product   @relation(fields: [product_id], references: [product_id])
+  quantity    Float
+  notes       String
+  warehouse   Warehouse @relation(fields: [warehouse_id], references: [warehouse_id])
+  confirm     Boolean   @default(false)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  product_id   String
+  warehouse_id Int
+}
+
+model Shipment {
+  shipment_id           String    @id @default(uuid())
+  shipment_code         String    @unique
+  origin                Warehouse @relation(fields: [warehouseWarehouse_id], references: [warehouse_id])
+  destination           Customer? @relation(fields: [customerCustomer_id], references: [customer_id])
+  shippedDate           DateTime
+  deliveryDate          DateTime?
+  warehouseWarehouse_id Int
+  customerCustomer_id   Int?
+}
+
 model Warehouse {
   warehouse_id Int    @id @default(autoincrement())
   name         String
@@ -74,8 +139,11 @@ model Warehouse {
   stock    Stock[]
   user     User[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  Inbound   Inbound[]
+  Outbound  Outbound[]
+  Shipment  Shipment[]
 }
 
 model Product {
@@ -95,6 +163,10 @@ model Product {
   inputby   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  OrderItem OrderItem[]
+  Inbound   Inbound[]
+  Outbound  Outbound[]
 }
 
 model Stock {
@@ -119,4 +191,20 @@ enum Role {
   ADMIN
   EMPLOYEE
   SALES
+}
+
+enum StatusOrder {
+  ARCHIVED
+  ON_DELEVERY
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELED
+}
+
+enum StatusShipment {
+  PENDING
+  IN_TRANSIT
+  DELIVERED
+  CANCELED
 }
