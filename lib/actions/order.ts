@@ -1,6 +1,7 @@
 "use server";
 import { prisma } from "@/lib/prisma";
 import { Order, OrderItem, Prisma } from "@prisma/client";
+import { handlePrismaError } from "../handlePrismaError";
 
 export const initialOrder = async ({
   data,
@@ -13,8 +14,11 @@ export const initialOrder = async ({
     });
     return order;
   } catch (error) {
-    console.log(error);
-    throw new Error("Failed to fetch");
+    const errorMessage = handlePrismaError(error);
+    console.error(errorMessage); // Logging ke konsol atau bisa juga ke sistem logging aplikasi
+
+    // Melempar error dengan pesan yang lebih jelas untuk pengguna atau sistem monitoring
+    throw new Error(`Failed to fetch categories: ${errorMessage}`);
   }
 };
 
@@ -55,8 +59,11 @@ export const addItem = async ({
     });
     return item;
   } catch (error) {
-    console.log(error);
-    throw new Error("Failed to fetch");
+    const errorMessage = handlePrismaError(error);
+    console.error(errorMessage); // Logging ke konsol atau bisa juga ke sistem logging aplikasi
+
+    // Melempar error dengan pesan yang lebih jelas untuk pengguna atau sistem monitoring
+    throw new Error(`Failed to fetch categories: ${errorMessage}`);
   }
 };
 

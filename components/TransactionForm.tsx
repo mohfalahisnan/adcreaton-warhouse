@@ -27,6 +27,7 @@ import { useToast } from "./ui/use-toast";
 import { queryClient } from "./provider";
 import { useRouter } from "next/navigation";
 import { generateOrderCode } from "@/lib/generateCode";
+import { handlePrismaError } from "@/lib/handlePrismaError";
 
 export interface ISelectedProduct extends Product {
   count: number;
@@ -108,9 +109,10 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
       queryClient.invalidateQueries({ queryKey: ["order", orderId] });
     },
     onError(error) {
+      const errorMessage = handlePrismaError(error);
       toast({
-        title: `Error: ${error.message}`,
-        description: `${error.message}`,
+        title: `Error`,
+        description: `${errorMessage}`,
         variant: "destructive",
       });
     },
@@ -152,6 +154,7 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     // Jika tidak ada tier yang cocok, kembalikan 0 atau mungkin handle error sesuai kebutuhan
     return product.sell_price;
   };
+
   const tierPriceApplied = (product: ISelectedProduct): number => {
     // Memeriksa apakah product dan tier_price tersedia
     if (!product || !product.tier_price) {
@@ -197,11 +200,25 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     return false;
   };
 
-  const totalPrice = (selectedProducts: ISelectedProduct[]): number => {
-    return selectedProducts.reduce(
-      (total, product) => total + calculateTotalPrice(product),
-      0
-    );
+  const totalPrice = (
+    selectedProducts:
+      | Prisma.OrderGetPayload<{
+          include: { OrderItem: { include: { product: true } } };
+        }>
+      | undefined
+  ): number => {
+    if (selectedProducts) {
+      return selectedProducts.OrderItem.reduce(
+        (total, orderItem) =>
+          total +
+          calculateTotalPrice({
+            ...orderItem.product,
+            count: orderItem.quantity,
+          }),
+        0
+      );
+    }
+    return 0; // Pastikan untuk mengembalikan nilai default jika selectedProducts adalah undefined
   };
 
   const handleAdd = async ({ item }: { item: IQueryItem }) => {
@@ -215,7 +232,9 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     }
   };
 
-  const queryGetOrder = useQuery({
+  const queryGetOrder = useQuery<Prisma.OrderGetPayload<{
+    include: { OrderItem: { include: { product: true } } };
+  }> | null>({
     queryKey: ["order", orderId],
     queryFn: async () => {
       if (!orderId) return null;
@@ -227,6 +246,14 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     mutationFn: async (id: string) => await deleteOrderItem(id),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["order", orderId] }),
+    onError: (error) => {
+      const errorMessage = handlePrismaError(error);
+      toast({
+        title: `Error`,
+        description: `${errorMessage}`,
+        variant: "destructive",
+      });
+    },
   });
 
   return (
@@ -331,8 +358,39 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
                       <TableCell>{item.product.name}</TableCell>
                       <TableCell>{item.quantity}</TableCell>
                       <TableCell className="text-right">
-                        Rp.{" "}
-                        {formatRupiah(item.product.sell_price * item.quantity)}
+                        {hasTierPrice({
+                          ...item.product,
+                          count: item.quantity,
+                        }) ? (
+                          <>
+                            <del>
+                              Rp.
+                              {formatRupiah(
+                                item.product.sell_price * item.quantity
+                              )}
+                            </del>
+                            <br />
+                            <span>
+                              Rp.
+                              {formatRupiah(
+                                tierPriceApplied({
+                                  ...item.product,
+                                  count: 20,
+                                }) * item.quantity
+                              )}
+                            </span>
+                          </>
+                        ) : (
+                          <span>
+                            Rp.{" "}
+                            {formatRupiah(
+                              tierPriceApplied({
+                                ...item.product,
+                                count: item.quantity,
+                              }) * item.quantity
+                            )}
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className="text-center">
                         <Button
@@ -361,7 +419,8 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
                 <TableCell>Sub Total</TableCell>
                 <TableCell></TableCell>
                 <TableCell className="text-right">
-                  Rp. {formatRupiah(totalPrice(selected))}
+                  Rp.{" "}
+                  {formatRupiah(totalPrice(queryGetOrder.data || undefined))}
                 </TableCell>
                 <TableCell className="text-center"></TableCell>
               </TableRow>
