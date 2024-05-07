@@ -60,9 +60,7 @@ export const addItem = async ({
     return item;
   } catch (error) {
     const errorMessage = handlePrismaError(error);
-    console.error(errorMessage); // Logging ke konsol atau bisa juga ke sistem logging aplikasi
-
-    // Melempar error dengan pesan yang lebih jelas untuk pengguna atau sistem monitoring
+    console.error(errorMessage);
     throw new Error(`Failed to fetch categories: ${errorMessage}`);
   }
 };

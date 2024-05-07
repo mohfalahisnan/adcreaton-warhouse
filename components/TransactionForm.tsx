@@ -42,7 +42,7 @@ export interface TierPrice {
 
 const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const [selected, setSelected] = useState<ISelectedProduct[]>([]);
-  const product = useGetProducts();
+  const product = useGetProducts({});
   const { toast } = useToast();
   const router = useRouter();
   const [orderId, setOrderId] = useState<string>();
@@ -127,8 +127,10 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   }
 
   function withTax() {
+    if (!queryGetOrder.data) return null;
     const total =
-      sumSellPrices(selected) + (sumSellPrices(selected) * 10) / 100;
+      totalPrice(queryGetOrder.data) +
+      (totalPrice(queryGetOrder.data) * 10) / 100;
     return total;
   }
 
@@ -429,7 +431,7 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
                 <TableCell>Tax 10%</TableCell>
                 <TableCell></TableCell>
                 <TableCell className="text-right">
-                  Rp. {formatRupiah(withTax())}
+                  Rp. {formatRupiah(withTax() || 0)}
                 </TableCell>
                 <TableCell className="text-center"></TableCell>
               </TableRow>
@@ -440,7 +442,7 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
                 <TableHead></TableHead>
                 <TableHead className="w-12"></TableHead>
                 <TableHead className="text-right">
-                  Rp. {formatRupiah(withTax())}
+                  Rp. {formatRupiah(withTax() || 0)}
                 </TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>

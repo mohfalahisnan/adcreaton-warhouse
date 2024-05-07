@@ -11,7 +11,7 @@ export default async function Home() {
       <LoginButton />
       {session && <LogoutButton />}
 
-      {/* <CreateUser /> */}
+      <CreateUser />
     </div>
   );
 }

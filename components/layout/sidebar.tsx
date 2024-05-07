@@ -11,16 +11,18 @@ import { Button } from "../ui/button";
 import SidebarNavigation from "./sidebar-navigation";
 import { useLocalStorage } from "@/hook/useLocalstorage";
 import Image from "next/image";
+import { useGetWarehouses } from "@/hook/useWarehouse";
+import { Warehouse } from "@prisma/client";
 
-type Props = {};
+function filterById(items: Warehouse[], id: string): Warehouse[] {
+  return items.filter((item) => item.warehouse_id === parseFloat(id));
+}
 
-const Sidebar = (props: Props) => {
-  const [value, setValue] = React.useState("Warehouse 1");
-  const strg = useLocalStorage("warehouse-id", value);
-  useEffect(() => {
-    strg[1](value);
-  }, [value, strg]);
-
+const Sidebar = () => {
+  const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
+  const { data } = useGetWarehouses({});
+  if (!data) return null;
+  const selected = filterById(data, warehouseId);
   return (
     <div className="hidden md:flex flex-col flex-shrink-0 min-h-screen bg-foreground text-background w-52">
       <div className="flex flex-col items-center justify-center p-4">
@@ -40,20 +42,22 @@ const Sidebar = (props: Props) => {
               size={"sm"}
               className="bg-foreground flex justify-between w-full rounded"
             >
-              {value} <ChevronsUpDown size={16} />
+              {selected[0].name}
+              <ChevronsUpDown size={16} />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-full min-w-[13rem]">
-            <DropdownMenuItem onSelect={() => setValue("Warehouse 1")}>
-              Warehouse 1
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setValue("Warehouse 2")}>
-              Warehouse 2
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setValue("Warehouse 3")}>
-              Warehouse 3
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setValue("Warehouse 1")}>
+            {data.map((item, i) => {
+              return (
+                <DropdownMenuItem
+                  key={i}
+                  onSelect={() => setWarehouseId(item.warehouse_id.toString())}
+                >
+                  {item.name}
+                </DropdownMenuItem>
+              );
+            })}
+            <DropdownMenuItem>
               <Plus size={14} />
               Add
             </DropdownMenuItem>
