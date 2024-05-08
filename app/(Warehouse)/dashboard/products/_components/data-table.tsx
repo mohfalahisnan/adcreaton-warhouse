@@ -61,12 +61,15 @@ import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import { queryClient } from "@/components/provider";
 import { ProductWithStock } from "@/interface";
+import { useLocalStorage } from "@/hook/useLocalstorage";
+import { hasWarehouseId } from "@/lib/filterById";
 
 export function DataTable({ data }: { data: ProductWithStock[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
   );
+  const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
@@ -175,8 +178,11 @@ export function DataTable({ data }: { data: ProductWithStock[] }) {
         const product = row.original;
         return (
           <div className="lowercase flex flex-row gap-2 relative group">
+            {hasWarehouseId(product.stock, parseInt(warehouseId))
+              ? ""
+              : "No Data"}
             {product.stock.map((stock, i) => {
-              if (stock.warehouse_id === 1) {
+              if (stock.warehouse_id === parseInt(warehouseId)) {
                 return (
                   <span key={i}>
                     {stock.total} {product.unit}
@@ -194,46 +200,7 @@ export function DataTable({ data }: { data: ProductWithStock[] }) {
       enableHiding: true,
       accessorKey: "inputby",
     },
-    {
-      id: "actions",
-      enableHiding: false,
-      header: "Status",
-      cell: ({ row }) => {
-        const product = row.original;
-        return (
-          <div>
-            {product.stock.map((stock, i) => {
-              return (
-                <div key={i}>
-                  {stock.total <= 0 ? (
-                    <Badge
-                      className="py-0 text-[9px] px-2 ml-2"
-                      variant={"failed"}
-                    >
-                      Out Of Stock
-                    </Badge>
-                  ) : stock.total <= 50 ? (
-                    <Badge
-                      className="py-0 text-[9px] px-2 ml-2"
-                      variant={"processing"}
-                    >
-                      Low Stock
-                    </Badge>
-                  ) : (
-                    <Badge
-                      className="py-0 text-[9px] px-2 ml-2"
-                      variant={"default"}
-                    >
-                      In Stock
-                    </Badge>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        );
-      },
-    },
+
     {
       accessorKey: "sell_price",
       header: ({ column }) => (
@@ -242,7 +209,7 @@ export function DataTable({ data }: { data: ProductWithStock[] }) {
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            Amount
+            Price
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         </div>

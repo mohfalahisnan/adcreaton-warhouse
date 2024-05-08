@@ -27,20 +27,24 @@ import { useGetCategory } from "@/hook/useCategory";
 import SelectCategory from "@/components/SelectCategory";
 import { ResponsiveDialog } from "@/components/ResponsiveDialog";
 import CategoryForm from "@/components/CategoryForm";
+import { useLocalStorage } from "@/hook/useLocalstorage";
 
 const ProductForm = () => {
   const session = useSession();
   const { toast } = useToast();
+  const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
   const [tierPrice, setTierPrice] = useState<ITierPrice[]>([
     { id: 0, from: 0, to: 0, price: 0 },
   ]);
+  const [stock, setStock] = useState(0);
   const router = useRouter();
   const [showFormCategory, setShowFormCategory] = useState(false);
   // Query functiono
   const category = useGetCategory({});
   const queryClient = useQueryClient();
   const productMutation = useMutation({
-    mutationFn: async (values: Product) => await addProduct(values),
+    mutationFn: async (values: Product) =>
+      await addProduct(values, parseInt(warehouseId), stock),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       router.push("/dashboard/products");
@@ -231,6 +235,18 @@ const ProductForm = () => {
                 )}
               />
 
+              <FormItem>
+                <FormLabel>Stock</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="Stock"
+                    onChange={(e) => setStock(parseInt(e.target.value))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+
               {/* Field for sell_price */}
               <FormField
                 control={form.control}
@@ -369,26 +385,6 @@ const ProductForm = () => {
               </div>
             </form>
           </Form>
-          <Button
-            onClick={() =>
-              toast({
-                description: (
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <span className="text-green-500">
-                        <CheckCircle2 size={28} strokeWidth={1} />
-                      </span>
-                    </div>
-                    <div>
-                      <h3 className="text-lg">Product Added!</h3>
-                    </div>
-                  </div>
-                ),
-              })
-            }
-          >
-            Toast
-          </Button>
         </div>
       </div>
     </div>

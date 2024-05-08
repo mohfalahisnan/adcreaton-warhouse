@@ -20,12 +20,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { addEmployee } from "@/lib/actions/accounts";
+import { useLocalStorage } from "@/hook/useLocalstorage";
 
 const EmployeeForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const session = useSession();
   const { toast } = useToast();
   const router = useRouter();
-
+  const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
   // Query functiono
   const queryClient = useQueryClient();
   const employeeMutation = useMutation({
@@ -45,7 +46,7 @@ const EmployeeForm = ({ onSuccess }: { onSuccess?: () => void }) => {
               </span>
             </div>
             <div>
-              <h3 className="text-lg">Product Added!</h3>
+              <h3 className="text-lg">Success !</h3>
             </div>
           </div>
         ),
@@ -70,6 +71,7 @@ const EmployeeForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     creditcard: z.string().optional(), // Adjust based on typical credit card number length
     position: z.string().optional(),
     inputby: z.string(),
+    warehouse_id: z.number().optional(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -81,7 +83,8 @@ const EmployeeForm = ({ onSuccess }: { onSuccess?: () => void }) => {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     values.inputby = session.data?.user?.name as string;
-    employeeMutation.mutate(values as User);
+    values.warehouse_id = parseFloat(warehouseId);
+    employeeMutation.mutate(values as unknown as User);
   }
 
   return (

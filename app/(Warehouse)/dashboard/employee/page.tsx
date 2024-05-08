@@ -14,9 +14,13 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ResponsiveDialog } from "@/components/ResponsiveDialog";
 import EmployeeForm from "@/components/EmployeeForm";
+import { useLocalStorage } from "@/hook/useLocalstorage";
 
 const Page = () => {
-  const { data, isLoading } = useGetEmployee({});
+  const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
+  const { data, isLoading } = useGetEmployee({
+    warehouse_id: parseInt(warehouseId),
+  });
   const [open, setOpen] = useState(false);
   return (
     <div>
@@ -30,11 +34,7 @@ const Page = () => {
               title="Add Employee"
               description=""
               triggerContent={
-                <Button
-                  variant={"secondary"}
-                  size={"sm"}
-                  className="flex items-center gap-2"
-                >
+                <Button size={"sm"} className="flex items-center gap-2">
                   <Plus size={12} /> Employee
                 </Button>
               }

@@ -97,7 +97,7 @@ const TableCategory = ({ data }: Props) => {
               <TableRow key={i + item.category_id}>
                 <TableCell className="text-center w-8">{i + 1}</TableCell>
                 <TableCell>{item.name}</TableCell>
-                <TableCell>{item.description}</TableCell>
+                <TableCell>{item.description || "-"}</TableCell>
                 <TableCell className="text-right w-5">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

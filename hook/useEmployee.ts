@@ -8,13 +8,15 @@ import { User } from "@prisma/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 export const useGetEmployee = ({
+  warehouse_id,
   queryConfig,
 }: {
+  warehouse_id: number;
   queryConfig?: UseQueryConfig;
 }) => {
   return useQuery<User[]>({
     queryKey: ["employee"],
-    queryFn: async () => await getAllEmployee(),
+    queryFn: async () => await getAllEmployee(warehouse_id),
     ...queryConfig,
   });
 };

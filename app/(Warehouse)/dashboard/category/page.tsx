@@ -30,11 +30,7 @@ const Page = () => {
               title="Add Category"
               description=""
               triggerContent={
-                <Button
-                  variant={"secondary"}
-                  size={"sm"}
-                  className="flex items-center gap-2"
-                >
+                <Button size={"sm"} className="flex items-center gap-2">
                   <Plus size={12} /> Category
                 </Button>
               }
@@ -49,9 +45,9 @@ const Page = () => {
         </div>
         <Card className="p-4">
           <CardHeader>
-            <CardTitle>Employee</CardTitle>
+            <CardTitle>Category</CardTitle>
             <CardDescription>
-              Recent employee from your warehouse.
+              Recent category from your warehouse.
             </CardDescription>
           </CardHeader>
           <TableCategory data={data || []} />

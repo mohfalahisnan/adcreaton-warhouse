@@ -21,14 +21,18 @@ export const getProducts = async () => {
   }
 };
 
-export const addProduct = async (product: Product) => {
+export const addProduct = async (
+  product: Product,
+  warehouse_id: number,
+  total: number
+) => {
   try {
     const products = await prisma.product.create({
       data: {
         ...product,
         stock: {
           createMany: {
-            data: [{ total: 100, warehouse_id: 1 }],
+            data: [{ total: total, warehouse_id: warehouse_id }],
           },
         },
       },

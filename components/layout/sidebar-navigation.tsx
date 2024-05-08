@@ -75,7 +75,7 @@ const SidebarNavigation = (props: Props) => {
             <Link href={item.url} title={item.title} key={i}>
               <li
                 className={`flex gap-2 items-center py-1.5 px-2.5 rounded hover:bg-white/10 ${
-                  path === item.url && "[&_svg]:stroke-primary bg-white/10"
+                  path === item.url && "bg-white/25"
                 }`}
               >
                 {item.icon} {item.title}

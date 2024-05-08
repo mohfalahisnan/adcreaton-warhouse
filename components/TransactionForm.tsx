@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 import {
   Table,
@@ -12,9 +12,9 @@ import {
   TableHeader,
   TableRow,
 } from "./ui/table";
-import { CheckCircle2, Plus, Save, ShoppingBag, Trash, X } from "lucide-react";
+import { ChevronsUpDown, Plus, Trash } from "lucide-react";
 import { useGetProducts } from "@/hook/useProduct";
-import { Order, OrderItem, Prisma, Product } from "@prisma/client";
+import { Prisma, Product } from "@prisma/client";
 import { formatRupiah } from "@/lib/formatRupiah";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -22,12 +22,25 @@ import {
   deleteOrderItem,
   getOrderById,
   initialOrder,
+  updateStatusOrder,
 } from "@/lib/actions/order";
 import { useToast } from "./ui/use-toast";
 import { queryClient } from "./provider";
 import { useRouter } from "next/navigation";
 import { generateOrderCode } from "@/lib/generateCode";
 import { handlePrismaError } from "@/lib/handlePrismaError";
+import { getCustomers } from "@/lib/actions/customer";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "./ui/command";
+import Dropdown from "./Dropdown";
+import { filterCustomerById } from "@/lib/filterById";
+import { useLocalStorage } from "@/hook/useLocalstorage";
 
 export interface ISelectedProduct extends Product {
   count: number;
@@ -41,8 +54,11 @@ export interface TierPrice {
 }
 
 const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
-  const [selected, setSelected] = useState<ISelectedProduct[]>([]);
   const product = useGetProducts({});
+  const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
+  const [open, setOpen] = React.useState(false);
+  const [customerId, setCustomerId] = useState<string>();
+  const [salesId, setSalesId] = useState(null);
   const { toast } = useToast();
   const router = useRouter();
   const [orderId, setOrderId] = useState<string>();
@@ -54,29 +70,18 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         data: {
           order_code: generateOrderCode(),
           totalAmount: null,
-          user_id: null,
           status: "ARCHIVED",
           createdAt: new Date(),
           updatedAt: new Date(),
+          sales_id: salesId,
+          customer_id: parseFloat(customerId || "") || 1,
+          warehouse_id: parseInt(warehouseId),
+          shipment_id: null,
         },
       }),
     onSuccess: (data) => {
       setOrderId(data.order_id);
       setOrderCode(data.order_code);
-      toast({
-        description: (
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <span className="text-green-500">
-                <CheckCircle2 size={28} strokeWidth={1} />
-              </span>
-            </div>
-            <div>
-              <h3 className="text-lg">Order Created!</h3>
-            </div>
-          </div>
-        ),
-      });
     },
     onError(error) {
       toast({
@@ -118,14 +123,6 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     },
   });
 
-  function sumSellPrices(products: ISelectedProduct[]): number {
-    let total = 0;
-    for (const product of products) {
-      total += product.sell_price * product.count;
-    }
-    return total;
-  }
-
   function withTax() {
     if (!queryGetOrder.data) return null;
     const total =
@@ -151,10 +148,9 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     // Menghitung total harga
     if (applicableTier) {
       return product.count * applicableTier.price;
+    } else {
+      return product.count * product.sell_price;
     }
-
-    // Jika tidak ada tier yang cocok, kembalikan 0 atau mungkin handle error sesuai kebutuhan
-    return product.sell_price;
   };
 
   const tierPriceApplied = (product: ISelectedProduct): number => {
@@ -224,6 +220,10 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   };
 
   const handleAdd = async ({ item }: { item: IQueryItem }) => {
+    if (!customerId) {
+      alert("Silahkan Pilih Customer!");
+      return null;
+    }
     if (!orderId) {
       queryOrder.mutateAsync().then(() => {
         queryItem.mutate(item);
@@ -244,6 +244,11 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     },
   });
 
+  const queryGetCustomers = useQuery({
+    queryKey: ["customers"],
+    queryFn: async () => await getCustomers(),
+  });
+
   const queryDeleteOrder = useMutation({
     mutationFn: async (id: string) => await deleteOrderItem(id),
     onSuccess: () =>
@@ -258,10 +263,77 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     },
   });
 
+  const queryNext = useMutation({
+    mutationFn: async (id: string) =>
+      await updateStatusOrder({ id: id, status: "PENDING" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["order", orderId] });
+      router.push("/dashboard/transaction");
+    },
+    onError: (error) => {
+      const errorMessage = handlePrismaError(error);
+      toast({
+        title: `Error`,
+        description: `${errorMessage}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const customer = filterCustomerById(
+    queryGetCustomers.data || [],
+    customerId || ""
+  );
   return (
     <div>
       <div className="flex flex-row gap-4">
         <div className="w-full">
+          <div className="flex flex-row items-center mb-4">
+            <h4 className="w-36">Sales :</h4>
+            {/* <Dropdown
+              open={open}
+              setOpen={setOpen}
+              triggerContent={
+                <Button onClick={() => setOpen(!open)}>Search Sales...</Button>
+              }
+            >
+              <div className="bg-card p-2 rounded-md shadow-lg">hallo</div>
+            </Dropdown> */}
+          </div>
+          <div className="flex flex-row items-center mb-4">
+            <h4 className="w-36">Custumer :</h4>
+            <Dropdown
+              open={open}
+              setOpen={setOpen}
+              triggerContent={
+                <Button onClick={() => setOpen(!open)}>
+                  {customerId ? customer[0].name : "Pilih Customer"}
+                </Button>
+              }
+            >
+              <div className="bg-card p-2 rounded-md shadow-lg">
+                {queryGetCustomers.data &&
+                  queryGetCustomers.data?.length <= 0 &&
+                  "No Data"}
+                {queryGetCustomers.data &&
+                  queryGetCustomers.data?.map((item, i) => {
+                    return (
+                      <Button
+                        variant={"ghost"}
+                        key={i}
+                        onClick={() => {
+                          setCustomerId(item.customer_id.toString());
+                          setOpen(false);
+                        }}
+                        className="min-w-40"
+                      >
+                        {item.name}
+                      </Button>
+                    );
+                  })}
+              </div>
+            </Dropdown>
+          </div>
           <div className="relative">
             <Input type="text" placeholder="Search product..." />
           </div>
@@ -449,6 +521,11 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
             </TableFooter>
           </Table>
         </div>
+      </div>
+      <div className="flex items-end justify-end mt-4">
+        <Button onClick={() => queryNext.mutate(orderId || "")}>
+          Lanjutkan
+        </Button>
       </div>
     </div>
   );

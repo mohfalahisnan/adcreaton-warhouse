@@ -77,11 +77,12 @@ export const getAllUser = async (): Promise<User[]> => {
   }
 };
 
-export const getAllEmployee = async (): Promise<User[]> => {
+export const getAllEmployee = async (warehouse_id: number): Promise<User[]> => {
   try {
     const users = await prisma.user.findMany({
       where: {
         role: "EMPLOYEE",
+        warehouse_id: warehouse_id,
       },
     });
     return users;

@@ -18,8 +18,8 @@ export default function RootLayout({
 }>) {
   return (
     <Provider>
-      <html lang="en">
-        <body className={inter.className}>
+      <html lang="en" suppressHydrationWarning>
+        <body className={`${inter.className}`}>
           <Toaster />
           {children}
         </body>

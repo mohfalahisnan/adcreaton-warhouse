@@ -30,7 +30,7 @@ model User {
   inputby      String
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
-  Order        Order[]
+  orders_sales Order[]       @relation("SalesRelation")
 }
 
 model Customer {
@@ -41,6 +41,7 @@ model Customer {
   warehouse_id Int
   warehouse    Warehouse  @relation(fields: [warehouse_id], references: [warehouse_id])
   Shipment     Shipment[]
+  Order        Order[]
 }
 
 model Transaction {
@@ -73,11 +74,20 @@ model Order {
   totalAmount Float?
 
   OrderItem  OrderItem[]
-  user_id    String?
-  sales_name User?       @relation(fields: [user_id], references: [user_id])
-  status     StatusOrder @default(PENDING)
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  sales_id   String?
+  sales_name User?       @relation(fields: [sales_id], references: [user_id], name: "SalesRelation")
+
+  customer_id   Int?
+  customer_name Customer? @relation(fields: [customer_id], references: [customer_id])
+
+  warehouse_id Int?
+
+  shipment_id String?
+  shipment    Shipment? @relation(fields: [shipment_id], references: [shipment_id])
+
+  status    StatusOrder @default(PENDING)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 }
 
 model OrderItem {
@@ -120,14 +130,40 @@ model Outbound {
 }
 
 model Shipment {
-  shipment_id           String    @id @default(uuid())
-  shipment_code         String    @unique
-  origin                Warehouse @relation(fields: [warehouseWarehouse_id], references: [warehouse_id])
-  destination           Customer? @relation(fields: [customerCustomer_id], references: [customer_id])
-  shippedDate           DateTime
-  deliveryDate          DateTime?
-  warehouseWarehouse_id Int
-  customerCustomer_id   Int?
+  shipment_id   String    @id @default(uuid())
+  shipment_code String    @unique
+  origin        Warehouse @relation(fields: [warehouse_id], references: [warehouse_id])
+  destination   Customer? @relation(fields: [customer_id], references: [customer_id])
+  shippedDate   DateTime
+  deliveryDate  DateTime?
+  warehouse_id  Int
+  customer_id   Int?
+  note          String?
+  order_id      String?
+  Order         Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Car       Car?     @relation(fields: [car_id], references: [car_id])
+  car_id    String?
+}
+
+model Car {
+  car_id            String     @id @default(uuid())
+  foto              String?
+  plat_nomor        String
+  tanggal_stnk      String?
+  tanggal_pajak     String?
+  tanggal_kir       String?
+  kelengkapan       String?
+  catatan_perbaikan String?
+  note              String?
+  warehouse_id      Int?
+  Warehouse         Warehouse? @relation(fields: [warehouse_id], references: [warehouse_id])
+  shipment          Shipment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Warehouse {
@@ -144,6 +180,7 @@ model Warehouse {
   Inbound   Inbound[]
   Outbound  Outbound[]
   Shipment  Shipment[]
+  Car       Car[]
 }
 
 model Product {

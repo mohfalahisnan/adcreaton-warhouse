@@ -13,18 +13,18 @@ import { useLocalStorage } from "@/hook/useLocalstorage";
 import Image from "next/image";
 import { useGetWarehouses } from "@/hook/useWarehouse";
 import { Warehouse } from "@prisma/client";
-
-function filterById(items: Warehouse[], id: string): Warehouse[] {
-  return items.filter((item) => item.warehouse_id === parseFloat(id));
-}
+import { filterById } from "@/lib/filterById";
+import { useRouter } from "next/navigation";
 
 const Sidebar = () => {
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
   const { data } = useGetWarehouses({});
+  const router = useRouter();
   if (!data) return null;
   const selected = filterById(data, warehouseId);
+
   return (
-    <div className="hidden md:flex flex-col flex-shrink-0 min-h-screen bg-foreground text-background w-52">
+    <div className="hidden md:flex flex-col flex-shrink-0 min-h-screen bg-primary text-background w-52">
       <div className="flex flex-col items-center justify-center p-4">
         <div className="text-center text-xl w-full mb-4 font-bold">
           <Image
@@ -40,9 +40,9 @@ const Sidebar = () => {
             <Button
               variant={"outline"}
               size={"sm"}
-              className="bg-foreground flex justify-between w-full rounded"
+              className="bg-primary flex justify-between w-full rounded"
             >
-              {selected[0].name}
+              {selected[0]?.name}
               <ChevronsUpDown size={16} />
             </Button>
           </DropdownMenuTrigger>
@@ -51,7 +51,10 @@ const Sidebar = () => {
               return (
                 <DropdownMenuItem
                   key={i}
-                  onSelect={() => setWarehouseId(item.warehouse_id.toString())}
+                  onSelect={() => {
+                    setWarehouseId(item.warehouse_id.toString());
+                    router.refresh();
+                  }}
                 >
                   {item.name}
                 </DropdownMenuItem>

@@ -17,12 +17,7 @@ const Page = () => {
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-semibold">Product</h3>
           <div className="flex gap-2">
-            <Button
-              variant={"secondary"}
-              asChild
-              size={"sm"}
-              className="flex items-center gap-2"
-            >
+            <Button asChild size={"sm"} className="flex items-center gap-2">
               <Link href={"/dashboard/products/add"}>
                 <Plus size={12} /> Product
               </Link>

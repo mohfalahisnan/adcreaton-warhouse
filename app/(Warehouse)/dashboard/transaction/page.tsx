@@ -1,5 +1,12 @@
 "use client";
-import { File, ListFilter, Plus } from "lucide-react";
+import {
+  CheckCircle2,
+  File,
+  ListFilter,
+  Plus,
+  Printer,
+  Truck,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,259 +35,185 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
-import { ResponsiveDialog } from "@/components/ResponsiveDialog";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { deleteOrder, getOrder } from "@/lib/actions/order";
+import { formatDate } from "@/lib/formatDate";
+import { formatRupiah } from "@/lib/formatRupiah";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useState } from "react";
-import TransactionForm from "@/components/TransactionForm";
+import { toast } from "@/components/ui/use-toast";
+import { queryClient } from "@/components/provider";
+import { Order } from "@prisma/client";
+import { useLocalStorage } from "@/hook/useLocalstorage";
+import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
+  const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
+  const { data } = useQuery({
+    queryKey: ["orders"],
+    queryFn: async () => await getOrder(parseInt(warehouseId)),
+  });
   const [open, setOpen] = useState(false);
+  const router = useRouter();
+  const [selected, setSelected] = useState<string>();
+  const deleteQuery = useMutation({
+    mutationFn: async (id: string) => await deleteOrder(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      setOpen(false);
+      toast({
+        description: (
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <span className="text-green-500">
+                <CheckCircle2 size={28} strokeWidth={1} />
+              </span>
+            </div>
+            <div>
+              <h3 className="text-lg">Order Deleted!</h3>
+            </div>
+          </div>
+        ),
+      });
+    },
+    onError(error) {
+      toast({
+        title: `Error`,
+        description: `${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+  const handleDelete = (id: string) => {
+    deleteQuery.mutate(id);
+  };
+
+  if (!data) return null;
   return (
     <main>
       <div className="mb-4">
         <div className="flex justify-end items-center">
           <div className="flex gap-2">
             <Link href={"/dashboard/transaction/add"}>
-              <Button
-                variant={"secondary"}
-                size={"sm"}
-                className="flex items-center gap-2"
-              >
+              <Button size={"sm"} className="flex items-center gap-2">
                 <Plus size={12} /> Transaction
               </Button>
             </Link>
-            <ResponsiveDialog
-              title="New Transaction"
-              description=""
-              triggerContent={
-                <Button
-                  variant={"secondary"}
-                  size={"sm"}
-                  className="flex items-center gap-2"
-                >
-                  <Plus size={12} /> Transaction
-                </Button>
-              }
-              open={open}
-              onOpenChange={setOpen}
-            >
-              <div className="max-h-[70vh] overflow-auto">
-                <TransactionForm onSuccess={() => setOpen(false)} />
-              </div>
-            </ResponsiveDialog>
           </div>
         </div>
       </div>
-      <Tabs defaultValue="week">
-        <div className="flex items-center">
-          <TabsList>
-            <TabsTrigger value="week">Week</TabsTrigger>
-            <TabsTrigger value="month">Month</TabsTrigger>
-            <TabsTrigger value="year">Year</TabsTrigger>
-          </TabsList>
-          <div className="ml-auto flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 gap-1 text-sm"
-                >
-                  <ListFilter className="h-3.5 w-3.5" />
-                  <span className="sr-only sm:not-sr-only">Filter</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Filter by</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuCheckboxItem checked>
-                  Fulfilled
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem>Declined</DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem>Refunded</DropdownMenuCheckboxItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button size="sm" variant="outline" className="h-7 gap-1 text-sm">
-              <File className="h-3.5 w-3.5" />
-              <span className="sr-only sm:not-sr-only">Export</span>
-            </Button>
-          </div>
+
+      <div className="flex items-center">
+        <div className="ml-auto flex items-center gap-2">
+          <Button size="sm" variant="outline" className="h-7 gap-1 text-sm">
+            <File className="h-3.5 w-3.5" />
+            <span className="sr-only sm:not-sr-only">Export</span>
+          </Button>
         </div>
-        <TabsContent value="week">
-          <Card x-chunk="dashboard-05-chunk-3">
-            <CardHeader className="px-7">
-              <CardTitle>Transactions</CardTitle>
-              <CardDescription>Recent orders from your store.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Customer</TableHead>
-                    <TableHead className="hidden sm:table-cell">Type</TableHead>
-                    <TableHead className="hidden sm:table-cell">
-                      Status
-                    </TableHead>
-                    <TableHead className="hidden md:table-cell">Date</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow className="bg-accent">
-                    <TableCell>
-                      <div className="font-medium">Liam Johnson</div>
-                      <div className="hidden text-sm text-muted-foreground md:inline">
-                        liam@example.com
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">Sale</TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <Badge className="text-xs" variant="secondary">
-                        Fulfilled
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      2023-06-23
-                    </TableCell>
-                    <TableCell className="text-right">$250.00</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      <div className="font-medium">Olivia Smith</div>
-                      <div className="hidden text-sm text-muted-foreground md:inline">
-                        olivia@example.com
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      Refund
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <Badge className="text-xs" variant="outline">
-                        Declined
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      2023-06-24
-                    </TableCell>
-                    <TableCell className="text-right">$150.00</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      <div className="font-medium">Noah Williams</div>
-                      <div className="hidden text-sm text-muted-foreground md:inline">
-                        noah@example.com
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      Subscription
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <Badge className="text-xs" variant="secondary">
-                        Fulfilled
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      2023-06-25
-                    </TableCell>
-                    <TableCell className="text-right">$350.00</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      <div className="font-medium">Emma Brown</div>
-                      <div className="hidden text-sm text-muted-foreground md:inline">
-                        emma@example.com
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">Sale</TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <Badge className="text-xs" variant="secondary">
-                        Fulfilled
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      2023-06-26
-                    </TableCell>
-                    <TableCell className="text-right">$450.00</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      <div className="font-medium">Liam Johnson</div>
-                      <div className="hidden text-sm text-muted-foreground md:inline">
-                        liam@example.com
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">Sale</TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <Badge className="text-xs" variant="secondary">
-                        Fulfilled
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      2023-06-23
-                    </TableCell>
-                    <TableCell className="text-right">$250.00</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      <div className="font-medium">Liam Johnson</div>
-                      <div className="hidden text-sm text-muted-foreground md:inline">
-                        liam@example.com
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">Sale</TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <Badge className="text-xs" variant="secondary">
-                        Fulfilled
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      2023-06-23
-                    </TableCell>
-                    <TableCell className="text-right">$250.00</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      <div className="font-medium">Olivia Smith</div>
-                      <div className="hidden text-sm text-muted-foreground md:inline">
-                        olivia@example.com
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      Refund
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <Badge className="text-xs" variant="outline">
-                        Declined
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      2023-06-24
-                    </TableCell>
-                    <TableCell className="text-right">$150.00</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      <div className="font-medium">Emma Brown</div>
-                      <div className="hidden text-sm text-muted-foreground md:inline">
-                        emma@example.com
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">Sale</TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <Badge className="text-xs" variant="secondary">
-                        Fulfilled
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      2023-06-26
-                    </TableCell>
-                    <TableCell className="text-right">$450.00</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Customer</TableHead>
+            <TableHead className="hidden sm:table-cell">Order Code</TableHead>
+            <TableHead className="hidden sm:table-cell">Status</TableHead>
+            <TableHead className="hidden md:table-cell">Date</TableHead>
+            <TableHead className="text-right">Amount</TableHead>
+            <TableHead></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {data.map((item, i) => {
+            return (
+              <TableRow key={i}>
+                <TableCell>
+                  <div className="font-medium">{item.customer_name?.name}</div>
+                  <div className="hidden text-sm text-muted-foreground md:inline">
+                    {item.customer_name?.phone}
+                  </div>
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  {item.order_code}
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  <Badge className="text-xs" variant="secondary">
+                    {item.status}
+                  </Badge>
+                </TableCell>
+                <TableCell className="hidden md:table-cell">
+                  {formatDate(item.createdAt)}
+                </TableCell>
+                <TableCell className="text-right">
+                  Rp. {formatRupiah(item.totalAmount || 0)}
+                </TableCell>
+                <TableCell className="flex items-center gap-2 justify-center">
+                  <Button size={"xs"}>
+                    <Printer size={16} />
+                  </Button>
+                  {item.status !== "ON_DELEVERY" && (
+                    <Button
+                      size={"xs"}
+                      onClick={() =>
+                        router.push(`/dashboard/shipping/${item.order_id}`)
+                      }
+                    >
+                      <Truck size={16} />
+                    </Button>
+                  )}
+                  <Button
+                    onClick={() => {
+                      setSelected(item.order_id);
+                      setOpen(true);
+                    }}
+                    size={"xs"}
+                    variant={"destructive"}
+                  >
+                    Delete
+                  </Button>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+
+      <AlertDialog open={open}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete and
+              remove your data from our servers.
+              {/* {selected} */}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setOpen(false);
+                setSelected(undefined);
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => handleDelete(selected as string)}
+              className="bg-destructive hover:bg-destructive"
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

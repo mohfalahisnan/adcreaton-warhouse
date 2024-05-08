@@ -18,11 +18,11 @@ const DashboardLayout = async ({ children }: Props) => {
   const session = await auth();
   if (!session) redirect("/login");
   return (
-    <div className="flex bg-foreground">
+    <div className="flex bg-accent">
       <Sidebar />
       <div className="flex-1 w-full">
         <MainNav />
-        <div className="rounded-tl-2xl bg-background p-4 min-h-[calc(100vh-4rem)]">
+        <div className="bg-background p-4 min-h-[calc(100vh-4rem)]">
           {children}
         </div>
       </div>
