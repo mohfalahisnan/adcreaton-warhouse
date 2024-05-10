@@ -1,6 +1,7 @@
 import {
   BarChart,
   Box,
+  Car,
   DollarSign,
   FileBarChart,
   HomeIcon,
@@ -39,19 +40,24 @@ const menu: Menu[] = [
     icon: <Users />,
   },
   {
-    title: "Category",
-    url: "/dashboard/category",
-    icon: <Layers3 />,
-  },
-  {
     title: "Transaction",
     url: "/dashboard/transaction",
     icon: <DollarSign />,
   },
   {
+    title: "Cars",
+    url: "/dashboard/cars",
+    icon: <Car />,
+  },
+  {
     title: "Shipping",
     url: "/dashboard/shipping",
     icon: <Truck />,
+  },
+  {
+    title: "Customer",
+    url: "/dashboard/customer",
+    icon: <Users />,
   },
   {
     title: "Report",

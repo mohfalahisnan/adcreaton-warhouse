@@ -3,7 +3,7 @@ import { signIn, useSession } from "next-auth/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, FormEvent, useState } from "react";
-
+import bg from "./../public/Background.png";
 type LoginInput = {
   username: string;
   password: string;
@@ -41,7 +41,10 @@ export default function LoginPage({ searchParams }: PageProps) {
   }
   return (
     <>
-      <div className="flex min-h-full flex-1 flex-col justify-center items-center px-6 lg:px-8">
+      <div
+        className="flex min-h-full flex-1 flex-col justify-center items-center px-6 lg:px-8 bg-cover"
+        style={{ backgroundImage: `url(${bg.src})` }}
+      >
         <div className="w-full max-w-2xl h-screen flex items-center justify-center gap-8">
           <div className="w-full">
             <h2 className="text-xl font-medium">Selamat Datang</h2>
@@ -108,7 +111,7 @@ export default function LoginPage({ searchParams }: PageProps) {
           </div>
           <div className="w-full">
             <Image
-              src={"/uploads/bg.png"}
+              src={"/image.png"}
               width={200}
               height={200}
               alt="thumb"
