@@ -12,15 +12,18 @@ import SidebarNavigation from "./sidebar-navigation";
 import { useLocalStorage } from "@/hook/useLocalstorage";
 import Image from "next/image";
 import { useGetWarehouses } from "@/hook/useWarehouse";
-import { Warehouse } from "@prisma/client";
 import { filterById } from "@/lib/filterById";
 import { useRouter } from "next/navigation";
+import { useSetting } from "@/hook/useSetting";
 
 const Sidebar = () => {
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
   const { data } = useGetWarehouses({});
+  const setting = useSetting({});
+
   const router = useRouter();
-  if (!data) return null;
+  if (!data) return;
+  if (!setting.data) return;
   const selected = filterById(data, warehouseId);
 
   return (
@@ -28,7 +31,7 @@ const Sidebar = () => {
       <div className="flex flex-col items-center justify-center p-4">
         <div className="text-center text-xl w-full mb-4 font-bold">
           <Image
-            src={"/logo.png"}
+            src={setting.data.web_logo}
             width={200}
             height={100}
             alt="logo"

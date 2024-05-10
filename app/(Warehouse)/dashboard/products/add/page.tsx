@@ -28,11 +28,14 @@ import SelectCategory from "@/components/SelectCategory";
 import { ResponsiveDialog } from "@/components/ResponsiveDialog";
 import CategoryForm from "@/components/CategoryForm";
 import { useLocalStorage } from "@/hook/useLocalstorage";
+import Image from "next/image";
 
 const ProductForm = () => {
   const session = useSession();
   const { toast } = useToast();
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [tierPrice, setTierPrice] = useState<ITierPrice[]>([
     { id: 0, from: 0, to: 0, price: 0 },
   ]);
@@ -94,6 +97,31 @@ const ProductForm = () => {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log("exec");
+    if (!file) {
+      alert("Please select a file first!");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        values.image = result.image;
+      } else {
+        alert(`Failed to upload file: ${result.message}`);
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      alert("Error uploading file");
+    }
+
     values.inputby = session.data?.user?.name as string;
     values.tier_price = JSON.stringify(tierPrice);
     productMutation.mutate(values as Product);
@@ -126,6 +154,14 @@ const ProductForm = () => {
     setTierPrice(updatedTierPrice);
   };
 
+  // handle image file
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files[0]) {
+      setFile(files[0]);
+      setPreviewUrl(URL.createObjectURL(files[0]));
+    }
+  };
   return (
     <div>
       <div className="p-4 border bg-card rounded-lg">
@@ -160,6 +196,29 @@ const ProductForm = () => {
                   </FormItem>
                 )}
               />
+
+              <input
+                type="file"
+                id="file-upload"
+                onChange={handleFileChange}
+                accept="image/*"
+                className="hidden"
+              />
+              <label
+                htmlFor="file-upload"
+                className="cursor-pointer bg-primary text-white px-4 py-2 rounded-lg shadow hover:opacity-70"
+              >
+                Upload File
+              </label>
+              {previewUrl && (
+                <Image
+                  src={previewUrl}
+                  alt="Preview"
+                  width={200}
+                  height={200}
+                />
+              )}
+
               {/* Field for name */}
               <FormField
                 control={form.control}

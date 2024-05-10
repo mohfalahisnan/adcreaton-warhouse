@@ -15,13 +15,13 @@ const page = (props: Props) => {
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-semibold">Dashboard</h3>
           <div className="flex gap-2">
-            <Button size={"sm"} className="flex items-center gap-2">
+            {/* <Button size={"sm"} className="flex items-center gap-2">
               <Plus size={12} /> Transaction
-            </Button>
+            </Button> */}
           </div>
         </div>
       </div>
-      <div className="w-full">
+      <div className="w-full mb-8">
         <h3 className="font-bold text-center">
           Aktivitas apa yang ingin Anda lakukan?
         </h3>
@@ -52,14 +52,14 @@ const page = (props: Props) => {
         <Overview title="Income" value={343} lastweak={332} unit="pcs" />
         <Overview title="Income" value={343} lastweak={132} unit="pcs" />
       </div>
-      <div className="grid grid-cols-1 mt-4 gap-4">
+      {/* <div className="grid grid-cols-1 mt-4 gap-4">
         <Card>
           <CardContent className="pt-4">
             <h3>Order</h3>
             <DataTable />
           </CardContent>
         </Card>
-      </div>
+      </div> */}
     </div>
   );
 };

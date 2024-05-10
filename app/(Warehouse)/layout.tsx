@@ -5,13 +5,18 @@ import { Metadata } from "next";
 import React, { ReactNode } from "react";
 import { auth } from "../auth";
 import { redirect } from "next/navigation";
+import { getSetting } from "@/lib/actions/setting";
 
 type Props = {
   children: ReactNode;
 };
-export const metadata: Metadata = {
-  title: "Admin Panel",
-  description: "dashboard",
+
+export const metadata = async (): Promise<Metadata> => {
+  const data = await getSetting();
+  return {
+    title: data?.web_title || "Dashboard",
+    description: data?.web_description || "Description",
+  };
 };
 
 const DashboardLayout = async ({ children }: Props) => {

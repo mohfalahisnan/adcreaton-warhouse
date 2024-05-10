@@ -34,6 +34,8 @@ import { Order } from "@prisma/client";
 import { useLocalStorage } from "@/hook/useLocalstorage";
 import { useRouter } from "next/navigation";
 import { deleteShipment, getShipment } from "@/lib/actions/shipping";
+import { ResponsiveDialog } from "@/components/ResponsiveDialog";
+import RenderOrderList from "@/components/RenderOrderList";
 
 export default function Shipping() {
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
@@ -117,7 +119,21 @@ export default function Shipping() {
           {data.map((item, i) => {
             return (
               <TableRow key={i}>
-                <TableCell>{item.shipment_code}</TableCell>
+                <TableCell>
+                  <ResponsiveDialog
+                    title={item.shipment_code}
+                    description=""
+                    triggerContent={
+                      <h3 className="capitalize">{item.shipment_code}</h3>
+                    }
+                    actionButtons={<Button>Print</Button>}
+                  >
+                    <div>
+                      <RenderOrderList orderId={item.order_id || ""} />
+                    </div>
+                    Notes : {item.note || "-"}
+                  </ResponsiveDialog>
+                </TableCell>
                 <TableCell className="hidden sm:table-cell">
                   {item.Car?.plat_nomor}
                 </TableCell>

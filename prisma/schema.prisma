@@ -224,6 +224,14 @@ model Category {
   Product     Product[]
 }
 
+model Setting {
+  setting_id      Int     @id @default(autoincrement())
+  web_title       String
+  web_description String
+  web_logo        String
+  other           String?
+}
+
 enum Role {
   ADMIN
   EMPLOYEE

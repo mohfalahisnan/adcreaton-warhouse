@@ -63,6 +63,7 @@ import { queryClient } from "@/components/provider";
 import { ProductWithStock } from "@/interface";
 import { useLocalStorage } from "@/hook/useLocalstorage";
 import { hasWarehouseId } from "@/lib/filterById";
+import NewStock from "@/components/NewStock";
 
 export function DataTable({ data }: { data: ProductWithStock[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -176,11 +177,9 @@ export function DataTable({ data }: { data: ProductWithStock[] }) {
       },
       cell: ({ row }) => {
         const product = row.original;
+
         return (
           <div className="lowercase flex flex-row gap-2 relative group">
-            {hasWarehouseId(product.stock, parseInt(warehouseId))
-              ? ""
-              : "No Data"}
             {product.stock.map((stock, i) => {
               if (stock.warehouse_id === parseInt(warehouseId)) {
                 return (
@@ -190,6 +189,14 @@ export function DataTable({ data }: { data: ProductWithStock[] }) {
                 );
               }
             })}
+            {hasWarehouseId(product.stock, parseInt(warehouseId)) ? (
+              ""
+            ) : (
+              <NewStock
+                productId={product.product_id}
+                warehouseId={parseInt(warehouseId)}
+              />
+            )}
           </div>
         );
       },
