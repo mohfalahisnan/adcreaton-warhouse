@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, FormEvent, useState } from "react";
 import bg from "./../public/Background.png";
+import { useQuery } from "@tanstack/react-query";
+import { getSetting } from "@/lib/actions/setting";
 type LoginInput = {
   username: string;
   password: string;
@@ -16,6 +18,10 @@ type PageProps = {
 export default function LoginPage({ searchParams }: PageProps) {
   const session = useSession();
   const router = useRouter();
+  const { data } = useQuery({
+    queryKey: ["setting"],
+    queryFn: async () => await getSetting(),
+  });
   const [inputs, setInputs] = useState<LoginInput>({
     username: "",
     password: "",
@@ -47,7 +53,8 @@ export default function LoginPage({ searchParams }: PageProps) {
       >
         <div className="w-full max-w-2xl h-screen flex items-center justify-center gap-8">
           <div className="w-full">
-            <h2 className="text-xl font-medium">Selamat Datang</h2>
+            <h2 className="text-xl font-bold mb-4">{data?.web_title}</h2>
+
             {/* <h3>Sistem Gudang</h3> */}
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>

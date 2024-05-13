@@ -1,4 +1,4 @@
-import { Customer, Warehouse } from "@prisma/client";
+import { Customer, User, Warehouse } from "@prisma/client";
 
 export function filterById(items: Warehouse[], id: string): Warehouse[] {
   return items.filter((item) => item.warehouse_id === parseFloat(id));
@@ -6,6 +6,10 @@ export function filterById(items: Warehouse[], id: string): Warehouse[] {
 
 export function filterCustomerById(items: Customer[], id: string): Customer[] {
   return items.filter((item) => item.customer_id === parseFloat(id));
+}
+
+export function filterSalesById(items: User[], id: string): User[] {
+  return items.filter((item) => item.user_id === id);
 }
 
 export function hasWarehouseId(

@@ -102,6 +102,20 @@ export const addEmployee = async (data: User): Promise<User> => {
   }
 };
 
+export const addSales = async (data: Prisma.UserCreateInput): Promise<User> => {
+  try {
+    const user = await prisma.user.create({
+      data: {
+        ...data,
+        role: "SALES",
+      },
+    });
+    return user;
+  } catch (error) {
+    throw new Error();
+  }
+};
+
 export const addUser = async (data: Prisma.UserCreateInput) => {
   if (!data.password) return null;
   const hashedPassword = await hashPassword(data.password);
@@ -139,6 +153,20 @@ export const deleteUser = async (id: string) => {
       },
     });
     return user;
+  } catch (error) {
+    console.log(error);
+    throw new Error();
+  }
+};
+
+export const getSales = async (warehouseId: number) => {
+  try {
+    return await prisma.user.findMany({
+      where: {
+        role: "SALES",
+        warehouse_id: warehouseId,
+      },
+    });
   } catch (error) {
     console.log(error);
     throw new Error();

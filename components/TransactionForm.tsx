@@ -39,8 +39,9 @@ import {
   CommandItem,
 } from "./ui/command";
 import Dropdown from "./Dropdown";
-import { filterCustomerById } from "@/lib/filterById";
+import { filterCustomerById, filterSalesById } from "@/lib/filterById";
 import { useLocalStorage } from "@/hook/useLocalstorage";
+import { getSales } from "@/lib/actions/accounts";
 
 export interface ISelectedProduct extends Product {
   count: number;
@@ -57,12 +58,18 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const product = useGetProducts({});
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
   const [open, setOpen] = React.useState(false);
+  const [openSales, setOpenSales] = useState(false);
   const [customerId, setCustomerId] = useState<string>();
-  const [salesId, setSalesId] = useState(null);
+  const [salesId, setSalesId] = useState<string>();
   const { toast } = useToast();
   const router = useRouter();
   const [orderId, setOrderId] = useState<string>();
   const [orderCode, setOrderCode] = useState<string>();
+
+  const queryGetSales = useQuery({
+    queryKey: ["sales"],
+    queryFn: async () => await getSales(parseInt(warehouseId)),
+  });
 
   const queryOrder = useMutation({
     mutationFn: async () =>
@@ -70,10 +77,10 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
         data: {
           order_code: generateOrderCode(),
           totalAmount: null,
-          status: "ARCHIVED",
+          status: "PENDING",
           createdAt: new Date(),
           updatedAt: new Date(),
-          sales_id: salesId,
+          sales_id: salesId || "",
           customer_id: parseFloat(customerId || "") || 1,
           warehouse_id: parseInt(warehouseId),
           shipment_id: null,
@@ -284,21 +291,44 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     queryGetCustomers.data || [],
     customerId || ""
   );
+  const sales = filterSalesById(queryGetSales.data || [], salesId || "");
   return (
     <div>
       <div className="flex flex-row gap-4">
         <div className="w-full">
           <div className="flex flex-row items-center mb-4">
-            <h4 className="w-36">Sales :</h4>
-            {/* <Dropdown
-              open={open}
-              setOpen={setOpen}
+            <h4 className="w-36">Sales:</h4>
+            <Dropdown
+              open={openSales}
+              setOpen={setOpenSales}
               triggerContent={
-                <Button onClick={() => setOpen(!open)}>Search Sales...</Button>
+                <Button onClick={() => setOpenSales(!openSales)}>
+                  {salesId ? sales[0].name : "Pilih Sales"}
+                </Button>
               }
             >
-              <div className="bg-card p-2 rounded-md shadow-lg">hallo</div>
-            </Dropdown> */}
+              <div className="bg-card p-2 rounded-md shadow-lg">
+                {queryGetSales.data &&
+                  queryGetSales.data?.length <= 0 &&
+                  "No Data"}
+                {queryGetSales.data &&
+                  queryGetSales.data?.map((item, i) => {
+                    return (
+                      <Button
+                        variant={"ghost"}
+                        key={i}
+                        onClick={() => {
+                          setSalesId(item.user_id);
+                          setOpenSales(false);
+                        }}
+                        className="min-w-40"
+                      >
+                        {item.name}
+                      </Button>
+                    );
+                  })}
+              </div>
+            </Dropdown>
           </div>
           <div className="flex flex-row items-center mb-4">
             <h4 className="w-36">Custumer :</h4>

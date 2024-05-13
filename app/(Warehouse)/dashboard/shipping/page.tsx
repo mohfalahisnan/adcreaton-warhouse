@@ -112,6 +112,7 @@ export default function Shipping() {
             <TableHead className="hidden md:table-cell">
               Delivery Date
             </TableHead>
+            <TableHead className="hidden md:table-cell">Status</TableHead>
             <TableHead></TableHead>
           </TableRow>
         </TableHeader>
@@ -144,7 +145,11 @@ export default function Shipping() {
                 <TableCell className="hidden md:table-cell">
                   {item.deliveryDate ? formatDate(item.deliveryDate) : "-"}
                 </TableCell>
-
+                <TableCell className="hidden sm:table-cell">
+                  <Badge variant={"secondary"}>
+                    {item.status ? item.status : "PENDING"}
+                  </Badge>
+                </TableCell>
                 <TableCell className="flex items-center gap-2 justify-center">
                   <Button size={"xs"}>
                     <Printer size={16} />

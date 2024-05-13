@@ -130,10 +130,10 @@ model Outbound {
 }
 
 model Shipment {
-  shipment_id   String    @id @default(uuid())
-  shipment_code String    @unique
-  origin        Warehouse @relation(fields: [warehouse_id], references: [warehouse_id])
-  destination   Customer? @relation(fields: [customer_id], references: [customer_id])
+  shipment_id   String         @id @default(uuid())
+  shipment_code String         @unique
+  origin        Warehouse      @relation(fields: [warehouse_id], references: [warehouse_id])
+  destination   Customer?      @relation(fields: [customer_id], references: [customer_id])
   shippedDate   DateTime
   deliveryDate  DateTime?
   warehouse_id  Int
@@ -141,6 +141,7 @@ model Shipment {
   note          String?
   order_id      String?
   Order         Order[]
+  status        StatusShipment @default(PENDING)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -152,6 +153,7 @@ model Car {
   car_id            String     @id @default(uuid())
   foto              String?
   plat_nomor        String
+  nama              String?
   tanggal_stnk      String?
   tanggal_pajak     String?
   tanggal_kir       String?
@@ -161,6 +163,7 @@ model Car {
   warehouse_id      Int?
   Warehouse         Warehouse? @relation(fields: [warehouse_id], references: [warehouse_id])
   shipment          Shipment[]
+  available         Boolean    @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

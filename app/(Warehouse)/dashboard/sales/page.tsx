@@ -18,16 +18,13 @@ import TableSales from "@/components/TableSales";
 import { useQuery } from "@tanstack/react-query";
 import { getSales } from "@/lib/actions/accounts";
 import SalesForm from "@/components/SalesForm";
-import TableCustomer from "@/components/TableCustomer";
-import { getCustomersWarehouse } from "@/lib/actions/customer";
-import CustomerForm from "@/components/CustomerForm";
 
 const Page = () => {
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
 
   const datas = useQuery({
-    queryKey: ["customer"],
-    queryFn: async () => await getCustomersWarehouse(parseInt(warehouseId)),
+    queryKey: ["sales"],
+    queryFn: async () => await getSales(parseInt(warehouseId)),
   });
   const [open, setOpen] = useState(false);
   return (
@@ -43,26 +40,24 @@ const Page = () => {
               description=""
               triggerContent={
                 <Button size={"sm"} className="flex items-center gap-2">
-                  <Plus size={12} /> Customer
+                  <Plus size={12} /> Sales
                 </Button>
               }
               open={open}
               onOpenChange={setOpen}
             >
               <div className="max-h-[70vh] overflow-auto">
-                <CustomerForm onSuccess={() => setOpen(false)} />
+                <SalesForm onSuccess={() => setOpen(false)} />
               </div>
             </ResponsiveDialog>
           </div>
         </div>
         <Card className="p-4">
           <CardHeader>
-            <CardTitle>Customer</CardTitle>
-            <CardDescription>
-              Recent Customer from your warehouse.
-            </CardDescription>
+            <CardTitle>Sales</CardTitle>
+            <CardDescription>Recent Sales from your warehouse.</CardDescription>
           </CardHeader>
-          <TableCustomer data={datas.data || []} />
+          <TableSales data={datas.data || []} />
         </Card>
       </Condition>
     </div>
