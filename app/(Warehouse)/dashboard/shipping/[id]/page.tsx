@@ -61,6 +61,7 @@ const Page = ({ params }: { params: { id: string } }) => {
       shippedDate: new Date(),
       deliveryDate: null,
       order_id: data.order_id,
+      status: "PENDING",
     };
     kirim.mutate(datas);
   };
