@@ -85,6 +85,7 @@ const ProductForm = () => {
     tier_price: z.string().optional(),
     inputby: z.string(),
     category_id: z.number(),
+    unit: z.string().optional(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -92,6 +93,7 @@ const ProductForm = () => {
     defaultValues: {
       inputby: session.data?.user?.name || "",
       image: "/products/product-1.jpg",
+      unit: "pcs",
     },
   });
 
@@ -305,6 +307,24 @@ const ProductForm = () => {
                 </FormControl>
                 <FormMessage />
               </FormItem>
+
+              <FormField
+                control={form.control}
+                name="unit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Unit</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        placeholder="Unit item ... pcs"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               {/* Field for sell_price */}
               <FormField

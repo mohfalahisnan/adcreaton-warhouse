@@ -49,7 +49,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { queryClient } from "@/components/provider";
 import { Order } from "@prisma/client";
@@ -123,8 +123,9 @@ export default function Dashboard() {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>Sales</TableHead>
             <TableHead>Customer</TableHead>
-            <TableHead className="hidden sm:table-cell">Order Code</TableHead>
+            <TableHead className="hidden sm:table-cell">Alamat</TableHead>
             <TableHead className="hidden sm:table-cell">Status</TableHead>
             <TableHead className="hidden md:table-cell">Date</TableHead>
             <TableHead className="text-right">Amount</TableHead>
@@ -136,13 +137,20 @@ export default function Dashboard() {
             return (
               <TableRow key={i}>
                 <TableCell>
-                  <div className="font-medium">{item.customer_name?.name}</div>
-                  <div className="hidden text-sm text-muted-foreground md:inline">
+                  <div className="font-medium capitalize">
+                    {item.sales_name?.name}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="font-medium capitalize">
+                    {item.customer_name?.name}
+                  </div>
+                  <div className="hidden text-xs text-muted-foreground md:inline">
                     {item.customer_name?.phone}
                   </div>
                 </TableCell>
                 <TableCell className="hidden sm:table-cell">
-                  {item.order_code}
+                  {item.customer_name?.alamat}
                 </TableCell>
                 <TableCell className="hidden sm:table-cell">
                   <Badge className="text-xs" variant="secondary">

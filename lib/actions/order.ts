@@ -104,7 +104,7 @@ export const addItem = async ({
             order_id: data.order_id,
           },
           data: {
-            quantity: existingItem.quantity + 1,
+            quantity: existingItem.quantity + data.quantity,
           },
         });
         return exist;

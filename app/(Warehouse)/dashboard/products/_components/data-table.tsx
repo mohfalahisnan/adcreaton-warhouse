@@ -184,7 +184,7 @@ export function DataTable({ data }: { data: ProductWithStock[] }) {
               if (stock.warehouse_id === parseInt(warehouseId)) {
                 return (
                   <span key={i}>
-                    {stock.total} {product.unit}
+                    {stock.total} {product.unit || "pcs"}
                   </span>
                 );
               }
