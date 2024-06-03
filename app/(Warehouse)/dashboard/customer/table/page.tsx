@@ -52,23 +52,25 @@ const Page = () => {
     columns: columnsConfig,
     actions: actionsConfig,
   });
+
   const handleDelete = (selectedRows: Customer[]) => {
     // Implement your delete logic here
     console.log("Deleted rows:", selectedRows);
   };
 
-  const handlePrint = (selectedRows: Customer[]) => {
+  const handleEdit = (selectedRows: Customer[]) => {
     // Implement your edit logic here
     console.log("Edited rows:", selectedRows);
   };
-  if (!data) return null;
+
+  if (!data) return <div>No data available.</div>;
   return (
     <div>
       <DataTable
         columns={columns}
         data={data}
         onDelete={handleDelete}
-        onPrint={handlePrint}
+        onPrint={handleEdit}
       />
     </div>
   );

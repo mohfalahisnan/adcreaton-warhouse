@@ -60,11 +60,6 @@ const menu: Menu[] = [
     icon: <Users />,
   },
   {
-    title: "Sales",
-    url: "/dashboard/sales",
-    icon: <Users />,
-  },
-  {
     title: "Report",
     url: "/dashboard/report",
     icon: <FileBarChart />,
