@@ -1,6 +1,6 @@
 "use server";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import { Customer, Prisma } from "@prisma/client";
 
 export const getCustomers = async () => {
   try {
@@ -46,5 +46,22 @@ export const deleteCustomer = async (id: number) => {
   } catch (error) {
     console.log(error);
     throw new Error("Failed to fetch");
+  }
+};
+
+export const deleteCustomers = async (customers: Customer[]) => {
+  try {
+    const customerIds = customers.map((customer) => customer.customer_id);
+    const deletedCustomers = await prisma.customer.deleteMany({
+      where: {
+        customer_id: {
+          in: customerIds,
+        },
+      },
+    });
+    return deletedCustomers;
+  } catch (error) {
+    console.log(error);
+    throw new Error("Failed to delete customers");
   }
 };

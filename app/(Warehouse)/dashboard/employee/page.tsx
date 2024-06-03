@@ -158,21 +158,23 @@ const Page = () => {
   if (!data) return <div>No data available.</div>;
   return (
     <div>
-      <ResponsiveDialog
-        title="Add Employee"
-        description=""
-        triggerContent={
-          <Button size={"sm"} className="flex items-center gap-2">
-            <Plus size={12} /> Employee
-          </Button>
-        }
-        open={openAdd}
-        onOpenChange={setOpenAdd}
-      >
-        <div className="max-h-[70vh] overflow-auto">
-          <EmployeeForm onSuccess={() => setOpenAdd(false)} />
-        </div>
-      </ResponsiveDialog>
+      <div className="w-full flex items-end justify-end">
+        <ResponsiveDialog
+          title="Add Employee"
+          description=""
+          triggerContent={
+            <Button size={"sm"} className="flex items-center gap-2">
+              <Plus size={12} /> Employee
+            </Button>
+          }
+          open={openAdd}
+          onOpenChange={setOpenAdd}
+        >
+          <div className="max-h-[70vh] overflow-auto">
+            <EmployeeForm onSuccess={() => setOpenAdd(false)} />
+          </div>
+        </ResponsiveDialog>
+      </div>
       <DataTable
         columns={columns}
         data={data}

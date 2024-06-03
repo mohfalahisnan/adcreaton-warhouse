@@ -12,10 +12,12 @@ import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { ColumnHeader } from "../ColumnHeader";
 import { Checkbox } from "@/components/ui/checkbox";
+import { formatRupiah } from "@/lib/formatRupiah";
 
 export type ColumnConfig<T> = {
-  accessorKey: keyof T;
+  accessorKey: keyof T | string;
   title: string;
+  type?: "date" | "number" | "string" | "currency";
 };
 
 export type ActionConfig<T> = {
@@ -27,7 +29,9 @@ export type CreateColumnsProps<T> = {
   columns: ColumnConfig<T>[];
   actions: ActionConfig<T>[];
 };
-
+const getNestedValue = (obj: any, path: string) => {
+  return path.split(".").reduce((value, key) => value?.[key], obj);
+};
 export const createColumns = <T extends Record<string, any>>({
   columns,
   actions,
@@ -59,6 +63,19 @@ export const createColumns = <T extends Record<string, any>>({
     header: ({ column: col }: { column: ColumnDef<T> }) => (
       <ColumnHeader column={col as any} title={column.title} />
     ),
+    cell: ({ row }: { row: any }) => {
+      const cellValue = getNestedValue(
+        row.original,
+        column.accessorKey as string
+      );
+      if (column.type === "date") {
+        const date = new Date(cellValue);
+        return date.toLocaleDateString(); // Adjust the format here if needed
+      } else if (column.type === "currency") {
+        return `Rp ${formatRupiah(cellValue)}`;
+      }
+      return cellValue;
+    },
   })),
   {
     id: "actions",

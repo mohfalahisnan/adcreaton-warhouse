@@ -21,7 +21,7 @@ import {
   deleteCustomers,
   getCustomersWarehouse,
 } from "@/lib/actions/customer";
-import { Customer } from "@prisma/client";
+import { Customer, Order, Prisma, Transaction } from "@prisma/client";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -33,48 +33,29 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CheckCircle2, Plus } from "lucide-react";
 import React, { useState } from "react";
+import { deleteOrders, getOrder } from "@/lib/actions/order";
+interface TransactionTable
+  extends Prisma.OrderGetPayload<{
+    include: {
+      _count: true;
+      OrderItem: true;
+      sales_name: true;
+      customer_name: true;
+    };
+  }> {}
 
 const Page = () => {
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
   const { data } = useQuery({
-    queryKey: ["customer"],
-    queryFn: async () => await getCustomersWarehouse(parseInt(warehouseId)),
+    queryKey: ["orders"],
+    queryFn: async () => await getOrder(parseInt(warehouseId)),
   });
   const [open, setOpen] = useState(false);
   const [openAdd, setOpenAdd] = useState(false);
-  const [selected, setSelected] = useState<number>();
-  const deleteQuery = useMutation({
-    mutationFn: async (id: number) => await deleteCustomer(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["customer"] });
+  const [selected, setSelected] = useState<string>();
 
-      setOpen(false);
-      toast({
-        description: (
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <span className="text-green-500">
-                <CheckCircle2 size={28} strokeWidth={1} />
-              </span>
-            </div>
-            <div>
-              <h3 className="text-lg">Customer Deleted!</h3>
-            </div>
-          </div>
-        ),
-      });
-    },
-    onError(error) {
-      toast({
-        title: `Error: ${error.message}`,
-        description: `${error.message}`,
-        variant: "destructive",
-      });
-    },
-  });
   const deleteQuerys = useMutation({
-    mutationFn: async (customers: Customer[]) =>
-      await deleteCustomers(customers),
+    mutationFn: async (transaction: Order[]) => await deleteOrders(transaction),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customer"] });
 
@@ -102,32 +83,42 @@ const Page = () => {
       });
     },
   });
-  const columnsConfig: ColumnConfig<Customer>[] = [
+  const columnsConfig: ColumnConfig<TransactionTable>[] = [
     {
-      accessorKey: "name",
-      title: "Name",
+      accessorKey: "customer_name.name",
+      title: "Customer Name",
     },
     {
-      accessorKey: "phone",
-      title: "Phone",
+      accessorKey: "sales_name.name",
+      title: "Sales Name",
     },
     {
-      accessorKey: "alamat",
-      title: "Alamat",
+      accessorKey: "createdAt",
+      title: "Order Date",
+      type: "date",
+    },
+    {
+      accessorKey: "status",
+      title: "Status",
+    },
+    {
+      accessorKey: "totalAmount",
+      title: "Total Amount",
+      type: "currency",
     },
   ];
 
-  const actionsConfig: ActionConfig<Customer>[] = [
+  const actionsConfig: ActionConfig<TransactionTable>[] = [
     {
       label: "Copy Id",
-      onClick: (employee: Customer) =>
-        navigator.clipboard.writeText(JSON.stringify(employee.customer_id)),
+      onClick: (transaction: TransactionTable) =>
+        navigator.clipboard.writeText(JSON.stringify(transaction.order_id)),
     },
     {
       label: "Delete",
-      onClick: (employee: Customer) => {
+      onClick: (transaction: TransactionTable) => {
         setOpen(true);
-        setSelected(employee.customer_id);
+        setSelected(transaction.order_id);
       },
     },
   ];
@@ -136,13 +127,13 @@ const Page = () => {
     columns: columnsConfig,
     actions: actionsConfig,
   });
-  const handleDelete = (selectedRows: Customer[]) => {
+  const handleDelete = (selectedRows: TransactionTable[]) => {
     // Implement your delete logic here
     console.log("Deleted rows:", selectedRows);
-    deleteQuerys.mutate(selectedRows);
+    // deleteQuerys.mutate(selectedRows);
   };
 
-  const handlePrint = (selectedRows: Customer[]) => {
+  const handlePrint = (selectedRows: TransactionTable[]) => {
     // Implement your edit logic here
     console.log("Edited rows:", selectedRows);
   };
@@ -168,7 +159,7 @@ const Page = () => {
       </div>
       <DataTable
         columns={columns}
-        data={data}
+        data={[...data]}
         onDelete={handleDelete}
         onPrint={handlePrint}
       />
@@ -192,7 +183,7 @@ const Page = () => {
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deleteQuery.mutate(selected as number)}
+              //   onClick={() => deleteQuery.mutate(selected)}
               className="bg-destructive hover:bg-destructive"
             >
               Continue

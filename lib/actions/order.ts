@@ -176,6 +176,22 @@ export const getOrder = async (warehouse_id: number) => {
   }
 };
 
+export const deleteOrders = async (orders: Order[]) => {
+  try {
+    const deleteOrders = await prisma.order.deleteMany({
+      where: {
+        order_id: {
+          in: orders.map((order) => order.order_id),
+        },
+      },
+    });
+    return deleteOrders;
+  } catch (error) {
+    console.log(error);
+    throw new Error("Failed to fetch");
+  }
+};
+
 export const deleteOrderItem = async (id: string) => {
   try {
     const order = await prisma.orderItem.delete({
