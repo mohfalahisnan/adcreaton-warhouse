@@ -1,6 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import formidable, { errors as formidableErrors } from "formidable";
-import { promises as fs } from "fs";
+import formidable from "formidable";
 import fse from "fs-extra"; // Using fs-extra
 import path from "path";
 

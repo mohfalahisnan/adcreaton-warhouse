@@ -1,5 +1,4 @@
 import { getOrderById } from "@/lib/actions/order";
-import { Order, Prisma } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 

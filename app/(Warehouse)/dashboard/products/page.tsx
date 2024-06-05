@@ -38,7 +38,7 @@ const Page = () => {
           <Loading />
         </Condition>
         <Condition show={!isLoading}>
-          <DataTable data={data || []} />
+          <DataTable data={data as any} />
         </Condition>
       </div>
     </div>

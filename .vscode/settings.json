@@ -1,0 +1,69 @@
+{
+  "workbench.colorTheme": "One Dark Pro",
+  "workbench.iconTheme": "material-icon-theme",
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.fontFamily": "CaskaydiaCove, Fira Code Retina",
+  "editor.fontLigatures": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "always"
+  },
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "git.autofetch": true,
+  "editor.minimap.enabled": false,
+  "window.titleBarStyle": "custom",
+  "vscode_vibrancy.opacity": 0.1,
+  "vscode_vibrancy.refreshInterval": 500,
+  "terminal.integrated.defaultProfile.windows": "Git Bash",
+  "terminal.integrated.fontFamily": "CaskaydiaCove, FiraCode Nerd Font",
+  "vim.commandLineModeKeyBindings": [],
+  "vim.commandLineModeKeyBindingsNonRecursive": [],
+  "vim.foldfix": true,
+  "vim.useSystemClipboard": true,
+  "vim.highlightedyank.enable": true,
+  "vim.handleKeys": {
+    "<C-d>": true,
+    "<C-s>": false,
+    "<C-z>": false
+  },
+  "vim.insertModeKeyBindings": [
+    {
+      "before": ["k", "j"],
+      "after": ["<Esc>"]
+    }
+  ],
+  "vim.normalModeKeyBindings": [
+    {
+      "before": ["[", "d"],
+      "commands": ["editor.action.marker.next"]
+    },
+    {
+      "before": ["]", "d"],
+      "commands": ["editor.action.marker.next"]
+    }
+  ],
+  "vim.leader": "<space>",
+  "fluent-ui-vscode.accent": "#FFFFFF",
+  "workbench.colorCustomizations": {
+    "terminal.background": "#232324",
+
+    "minimap.background": "#ffffff"
+  },
+  "vscode_vibrancy.imports": ["/path/to/file"],
+  "[prisma]": {
+    "editor.defaultFormatter": "Prisma.prisma"
+  },
+  "tailwindCSS.emmetCompletions": true,
+  "vsicons.dontShowNewVersionMessage": true,
+  "explorer.compactFolders": false,
+  "workbench.settings.editor": "json",
+  "git.confirmSync": false,
+  "prisma.showPrismaDataPlatformNotification": false,
+  "explorer.confirmDragAndDrop": false,
+  "explorer.confirmDelete": false
+}

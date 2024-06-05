@@ -6,10 +6,9 @@ import {
   createColumns,
 } from "@/components/table/_utils/columns";
 
-import { useGetEmployee } from "@/hook/useEmployee";
 import { useLocalStorage } from "@/hook/useLocalstorage";
 import { getCustomersWarehouse } from "@/lib/actions/customer";
-import { Customer, User } from "@prisma/client";
+import { Customer } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 

@@ -1,3 +1,4 @@
+/* eslint-disable unused-imports/no-unused-vars */
 import { PrismaClient } from "@prisma/client";
 
 declare global {

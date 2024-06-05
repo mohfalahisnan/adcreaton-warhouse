@@ -1,4 +1,3 @@
-import { ResponsiveDialog } from "@/components/ResponsiveDialog";
 import { queryClient } from "@/components/provider";
 import {
   AlertDialog,
@@ -29,12 +28,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useDeleteCategory } from "@/hook/useCategory";
 import { Category } from "@prisma/client";
 
-import {
-  CheckCircle2,
-  MoreVertical,
-  PencilIcon,
-  TrashIcon,
-} from "lucide-react";
+import { CheckCircle2, MoreVertical, TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 

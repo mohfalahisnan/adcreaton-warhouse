@@ -1,5 +1,5 @@
 "use client";
-import { CheckCircle2, File, Plus, Printer, Truck } from "lucide-react";
+import { CheckCircle2, Plus } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import Link from "next/link";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { deleteOrder, getOrder } from "@/lib/actions/order";
-import { formatDate } from "@/lib/formatDate";
-import { formatRupiah } from "@/lib/formatRupiah";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +27,6 @@ import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { queryClient } from "@/components/provider";
 import { useLocalStorage } from "@/hook/useLocalstorage";
-import { useRouter } from "next/navigation";
 import { deleteCar, getCars } from "@/lib/actions/car";
 import { ResponsiveDialog } from "@/components/ResponsiveDialog";
 import CarForm from "@/components/CarForm";

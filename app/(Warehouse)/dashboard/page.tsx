@@ -1,9 +1,6 @@
 import Overview from "@/components/section/overview";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Download, Plus } from "lucide-react";
 import React from "react";
-import { DataTable } from "../_components/data-table";
 import Link from "next/link";
 
 type Props = {};

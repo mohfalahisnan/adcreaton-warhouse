@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "./ui/table";
-import { ChevronsUpDown, Plus, Trash } from "lucide-react";
+import { Trash } from "lucide-react";
 import { useGetProducts } from "@/hook/useProduct";
 import { Prisma, Product } from "@prisma/client";
 import { formatRupiah } from "@/lib/formatRupiah";
@@ -32,14 +32,7 @@ import { useRouter } from "next/navigation";
 import { generateOrderCode } from "@/lib/generateCode";
 import { handlePrismaError } from "@/lib/handlePrismaError";
 import { getCustomers } from "@/lib/actions/customer";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "./ui/command";
+
 import Dropdown from "./Dropdown";
 import { filterCustomerById, filterSalesById } from "@/lib/filterById";
 import { useLocalStorage } from "@/hook/useLocalstorage";
@@ -118,6 +111,7 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
           order_id: orderId,
           quantity: data.quantity,
           notes: data.notes,
+          discount: 0,
         },
       });
     },

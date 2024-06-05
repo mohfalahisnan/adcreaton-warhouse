@@ -9,9 +9,10 @@ export const getProducts = async () => {
         Category: true,
         stock: {
           include: {
-            warhouse: true,
+            warehouse: true,
           },
         },
+        Satuan: true,
         _count: true,
       },
     });
@@ -21,20 +22,12 @@ export const getProducts = async () => {
   }
 };
 
-export const addProduct = async (
-  product: Product,
-  warehouse_id: number,
-  total: number
-) => {
+export const addProduct = async (product: Product, inputBy: string) => {
   try {
     const products = await prisma.product.create({
       data: {
         ...product,
-        stock: {
-          createMany: {
-            data: [{ total: total, warehouse_id: warehouse_id }],
-          },
-        },
+        inputby: inputBy,
       },
     });
     return products;
@@ -54,13 +47,14 @@ export const getProductById = async (id: string) => {
         Category: true,
         stock: {
           include: {
-            warhouse: true,
+            warehouse: true,
           },
         },
       },
     });
     return product;
   } catch (error) {
+    console.log(error);
     throw new Error("Failed to fetch");
   }
 };

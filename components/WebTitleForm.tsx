@@ -3,7 +3,7 @@ import { useSetting } from "@/hook/useSetting";
 import React, { useState } from "react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { Disc, Save } from "lucide-react";
+import { Save } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { saveSetting } from "@/lib/actions/setting";
 import { Setting } from "@prisma/client";
@@ -11,9 +11,7 @@ import { queryClient } from "./provider";
 import { useRouter } from "next/navigation";
 import { toast } from "./ui/use-toast";
 
-type Props = {};
-
-const WebTitleForm = (props: Props) => {
+const WebTitleForm = () => {
   const [title, setTitle] = useState<string>();
   const { data } = useSetting({});
   const router = useRouter();

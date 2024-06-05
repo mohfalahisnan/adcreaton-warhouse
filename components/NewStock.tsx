@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useMutation } from "@tanstack/react-query";
-import { newStock, updateStock } from "@/lib/actions/stock";
+import { newStock } from "@/lib/actions/stock";
 import { queryClient } from "./provider";
 import { toast } from "./ui/use-toast";
 import { handlePrismaError } from "@/lib/handlePrismaError";

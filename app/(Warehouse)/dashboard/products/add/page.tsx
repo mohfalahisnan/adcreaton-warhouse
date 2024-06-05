@@ -47,7 +47,7 @@ const ProductForm = () => {
   const queryClient = useQueryClient();
   const productMutation = useMutation({
     mutationFn: async (values: Product) =>
-      await addProduct(values, parseInt(warehouseId), stock),
+      await addProduct(values, session.data?.user?.name as string),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       router.push("/dashboard/products");
@@ -85,7 +85,7 @@ const ProductForm = () => {
     tier_price: z.string().optional(),
     inputby: z.string(),
     category_id: z.number(),
-    unit: z.string().optional(),
+    // unit: z.string().optional(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -93,7 +93,7 @@ const ProductForm = () => {
     defaultValues: {
       inputby: session.data?.user?.name || "",
       image: "/products/product-1.jpg",
-      unit: "pcs",
+      // unit: "pcs",
     },
   });
 
@@ -290,36 +290,6 @@ const ProductForm = () => {
                     <FormLabel>Description</FormLabel>
                     <FormControl>
                       <Textarea placeholder="Description" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormItem>
-                <FormLabel>Stock</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="Stock"
-                    onChange={(e) => setStock(parseInt(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-
-              <FormField
-                control={form.control}
-                name="unit"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Unit</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="text"
-                        placeholder="Unit item ... pcs"
-                        {...field}
-                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

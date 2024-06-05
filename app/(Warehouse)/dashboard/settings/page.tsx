@@ -8,13 +8,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Cog, Plus } from "lucide-react";
+import { Cog } from "lucide-react";
 import React, { useState } from "react";
 import TableCategory from "../category/TableCategory";
 import { useGetCategory } from "@/hook/useCategory";
-import { ResponsiveDialog } from "@/components/ResponsiveDialog";
-import UserForm from "@/components/UserForm";
-import TableUsers from "@/components/TableUsers";
 import UserSetting from "@/components/UserSetting";
 import LogoSetting from "@/components/LogoSetting";
 import WebTitleForm from "@/components/WebTitleForm";

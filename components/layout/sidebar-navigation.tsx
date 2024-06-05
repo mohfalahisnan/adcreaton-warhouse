@@ -5,8 +5,6 @@ import {
   DollarSign,
   FileBarChart,
   HomeIcon,
-  Layers3,
-  Presentation,
   Settings,
   Truck,
   Users,
@@ -33,6 +31,11 @@ const menu: Menu[] = [
     title: "Products",
     url: "/dashboard/products",
     icon: <Box />,
+  },
+  {
+    title: "Stock",
+    url: "/dashboard/stock",
+    icon: <BarChart />,
   },
   {
     title: "Employee",

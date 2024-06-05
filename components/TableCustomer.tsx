@@ -26,9 +26,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
-import { useDeleteEmployee } from "@/hook/useEmployee";
 import { deleteCustomer } from "@/lib/actions/customer";
-import { Customer, User } from "@prisma/client";
+import { Customer } from "@prisma/client";
 import { useMutation } from "@tanstack/react-query";
 import {
   CheckCircle2,

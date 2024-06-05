@@ -14,12 +14,10 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2, Save } from "lucide-react";
-import { Category, User } from "@prisma/client";
+import { Category } from "@prisma/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { addEmployee } from "@/lib/actions/accounts";
 import { Textarea } from "./ui/textarea";
 import { createCategory } from "@/lib/actions/category";
 

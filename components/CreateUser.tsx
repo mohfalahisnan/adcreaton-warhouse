@@ -13,10 +13,10 @@ const CreateUser = (props: Props) => {
   });
   const handleClick = () => {
     user.mutate({
-      name: "falah",
+      name: "admin",
       inputby: "admin",
-      username: "fall",
-      email: "fall@example.com",
+      username: "admin",
+      email: "admin@example.com",
       password: "admin",
     });
   };

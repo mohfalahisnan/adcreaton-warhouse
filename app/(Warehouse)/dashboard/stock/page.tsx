@@ -1,7 +1,6 @@
 "use client";
 import CustomerForm from "@/components/CustomerForm";
 import { ResponsiveDialog } from "@/components/ResponsiveDialog";
-import { queryClient } from "@/components/provider";
 import { DataTable } from "@/components/table/DataTable";
 import {
   ActionConfig,
@@ -13,10 +12,8 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/use-toast";
 
 import { useLocalStorage } from "@/hook/useLocalstorage";
-import { Order, Prisma } from "@prisma/client";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -25,97 +22,102 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import React, { useState } from "react";
-import { deleteOrders, getOrder } from "@/lib/actions/order";
-import Link from "next/link";
-interface TransactionTable
-  extends Prisma.OrderGetPayload<{
-    include: {
-      _count: true;
-      OrderItem: true;
-      sales_name: true;
-      customer_name: true;
-    };
-  }> {}
+import { useGetProducts } from "@/hook/useProduct";
+import { ProductWithStock } from "@/interface";
 
 const Page = () => {
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
-  const { data } = useQuery({
-    queryKey: ["orders"],
-    queryFn: async () => await getOrder(parseInt(warehouseId)),
-  });
+  const { data } = useGetProducts({});
   const [open, setOpen] = useState(false);
   const [openAdd, setOpenAdd] = useState(false);
   const [selected, setSelected] = useState<string>();
+  //   const deleteQuery = useMutation({
+  //     mutationFn: async (id: number) => await deleteCustomer(id),
+  //     onSuccess: () => {
+  //       queryClient.invalidateQueries({ queryKey: ["customer"] });
 
-  const deleteQuerys = useMutation({
-    mutationFn: async (transaction: Order[]) => await deleteOrders(transaction),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
+  //       setOpen(false);
+  //       toast({
+  //         description: (
+  //           <div className="flex items-center justify-between gap-2">
+  //             <div>
+  //               <span className="text-green-500">
+  //                 <CheckCircle2 size={28} strokeWidth={1} />
+  //               </span>
+  //             </div>
+  //             <div>
+  //               <h3 className="text-lg">Customer Deleted!</h3>
+  //             </div>
+  //           </div>
+  //         ),
+  //       });
+  //     },
+  //     onError(error) {
+  //       toast({
+  //         title: `Error: ${error.message}`,
+  //         description: `${error.message}`,
+  //         variant: "destructive",
+  //       });
+  //     },
+  //   });
+  //   const deleteQuerys = useMutation({
+  //     mutationFn: async (customers: Product[]) =>
+  //       await deleteCustomers(customers),
+  //     onSuccess: () => {
+  //       queryClient.invalidateQueries({ queryKey: ["products"] });
 
-      setOpen(false);
-      toast({
-        description: (
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <span className="text-green-500">
-                <CheckCircle2 size={28} strokeWidth={1} />
-              </span>
-            </div>
-            <div>
-              <h3 className="text-lg">Order Deleted!</h3>
-            </div>
-          </div>
-        ),
-      });
-    },
-    onError(error) {
-      toast({
-        title: `Error: ${error.message}`,
-        description: `${error.message}`,
-        variant: "destructive",
-      });
-    },
-  });
-  const columnsConfig: ColumnConfig<TransactionTable>[] = [
+  //       setOpen(false);
+  //       toast({
+  //         description: (
+  //           <div className="flex items-center justify-between gap-2">
+  //             <div>
+  //               <span className="text-green-500">
+  //                 <CheckCircle2 size={28} strokeWidth={1} />
+  //               </span>
+  //             </div>
+  //             <div>
+  //               <h3 className="text-lg">Customer Deleted!</h3>
+  //             </div>
+  //           </div>
+  //         ),
+  //       });
+  //     },
+  //     onError(error) {
+  //       toast({
+  //         title: `Error: ${error.message}`,
+  //         description: `${error.message}`,
+  //         variant: "destructive",
+  //       });
+  //     },
+  //   });
+  const columnsConfig: ColumnConfig<ProductWithStock>[] = [
     {
-      accessorKey: "customer_name.name",
-      title: "Customer Name",
-      extends: ["customer_name.phone", "customer_name.alamat"],
-    },
-    {
-      accessorKey: "sales_name.name",
-      title: "Sales Name",
+      accessorKey: "name",
+      title: "Name",
     },
     {
-      accessorKey: "createdAt",
-      title: "Order Date",
-      type: "date",
+      accessorKey: "unit",
+      title: "Unit",
     },
     {
-      accessorKey: "status",
-      title: "Status",
-    },
-    {
-      accessorKey: "totalAmount",
-      title: "Total Amount",
-      type: "currency",
+      accessorKey: "sell_price",
+      title: "Sell Price",
     },
   ];
 
-  const actionsConfig: ActionConfig<TransactionTable>[] = [
+  const actionsConfig: ActionConfig<ProductWithStock>[] = [
     {
       label: "Copy Id",
-      onClick: (transaction: TransactionTable) =>
-        navigator.clipboard.writeText(JSON.stringify(transaction.order_id)),
+      onClick: (employee: ProductWithStock) =>
+        navigator.clipboard.writeText(JSON.stringify(employee.product_id)),
     },
     {
       label: "Delete",
-      onClick: (transaction: TransactionTable) => {
+      onClick: (employee: ProductWithStock) => {
         setOpen(true);
-        setSelected(transaction.order_id);
+        setSelected(employee.product_id);
       },
     },
   ];
@@ -124,30 +126,19 @@ const Page = () => {
     columns: columnsConfig,
     actions: actionsConfig,
   });
-  const handleDelete = (selectedRows: TransactionTable[]) => {
+  const handleDelete = (selectedRows: ProductWithStock[]) => {
     // Implement your delete logic here
     console.log("Deleted rows:", selectedRows);
-    deleteQuerys.mutate(selectedRows);
+    // deleteQuerys.mutate(selectedRows);
   };
 
-  const handlePrint = (selectedRows: TransactionTable[]) => {
+  const handlePrint = (selectedRows: ProductWithStock[]) => {
     // Implement your edit logic here
     console.log("Edited rows:", selectedRows);
   };
   if (!data) return null;
   return (
     <div>
-      <div className="mb-4">
-        <div className="flex justify-end items-center">
-          <div className="flex gap-2">
-            <Link href={"/dashboard/transaction/add"}>
-              <Button size={"sm"} className="flex items-center gap-2">
-                <Plus size={12} /> Transaction
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
       <div className="w-full flex items-end justify-end">
         <ResponsiveDialog
           title="Add Employee"
@@ -167,7 +158,7 @@ const Page = () => {
       </div>
       <DataTable
         columns={columns}
-        data={[...data]}
+        data={data}
         onDelete={handleDelete}
         onPrint={handlePrint}
       />
@@ -191,7 +182,7 @@ const Page = () => {
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              //   onClick={() => deleteQuery.mutate(selected)}
+              //   onClick={() => deleteQuery.mutate(selected as string)}
               className="bg-destructive hover:bg-destructive"
             >
               Continue

@@ -1,6 +1,5 @@
 "use client";
 import { useSetting } from "@/hook/useSetting";
-import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import React from "react";
 import LogoForm from "./LogoForm";

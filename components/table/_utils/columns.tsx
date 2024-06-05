@@ -14,10 +14,17 @@ import { ColumnHeader } from "../ColumnHeader";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatRupiah } from "@/lib/formatRupiah";
 
+type DeepKeys<T> = T extends object
+  ? {
+      [K in keyof T & string]: `${K}` | `${K}.${DeepKeys<T[K]>}`;
+    }[keyof T & string]
+  : never;
+
 export type ColumnConfig<T> = {
-  accessorKey: keyof T | string;
+  accessorKey: DeepKeys<T>;
   title: string;
   type?: "date" | "number" | "string" | "currency";
+  extends?: DeepKeys<T>[];
 };
 
 export type ActionConfig<T> = {
@@ -68,13 +75,22 @@ export const createColumns = <T extends Record<string, any>>({
         row.original,
         column.accessorKey as string
       );
+
       if (column.type === "date") {
         const date = new Date(cellValue);
         return date.toLocaleDateString(); // Adjust the format here if needed
       } else if (column.type === "currency") {
         return `Rp ${formatRupiah(cellValue)}`;
       }
-      return cellValue;
+      return (
+        <>
+          <h3>{cellValue}</h3>
+          {column.extends &&
+            column.extends.map((key, i) => (
+              <h3 key={i}>{getNestedValue(row.original, key)}</h3>
+            ))}
+        </>
+      );
     },
   })),
   {

@@ -1,6 +1,6 @@
 "use client";
 import { ChevronsUpDown, Plus } from "lucide-react";
-import React, { useEffect } from "react";
+import React from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,10 +20,18 @@ const Sidebar = () => {
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
   const { data } = useGetWarehouses({});
   const setting = useSetting({});
-
+  console.log(data);
+  console.log(setting.data);
   const router = useRouter();
-  if (!data) return;
-  if (!setting.data) return;
+  if (!data)
+    return (
+      <div className="hidden md:flex flex-col flex-shrink-0 min-h-screen bg-primary text-background w-52"></div>
+    );
+  if (!setting.data)
+    return (
+      <div className="hidden md:flex flex-col flex-shrink-0 min-h-screen bg-primary text-background w-52"></div>
+    );
+
   const selected = filterById(data, warehouseId);
 
   return (

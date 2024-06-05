@@ -11,7 +11,7 @@ import { formatRupiah } from "@/lib/formatRupiah";
 import { generateShipmentCode } from "@/lib/generateCode";
 import { Car, Shipment } from "@prisma/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Truck } from "lucide-react";
+import { Truck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 

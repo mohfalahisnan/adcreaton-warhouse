@@ -1,74 +1,58 @@
 "use client";
+import { queryClient } from "@/components/provider";
+import { DataTable } from "@/components/table/DataTable";
 import {
-  CheckCircle2,
-  File,
-  ListFilter,
-  Plus,
-  Printer,
-  Truck,
-} from "lucide-react";
-
-import { Badge } from "@/components/ui/badge";
+  ActionConfig,
+  ColumnConfig,
+  createColumns,
+} from "@/components/table/_utils/columns";
+import {
+  AlertDialogHeader,
+  AlertDialogFooter,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Link from "next/link";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { deleteOrder, getOrder } from "@/lib/actions/order";
-import { formatDate } from "@/lib/formatDate";
-import { formatRupiah } from "@/lib/formatRupiah";
+import { toast } from "@/components/ui/use-toast";
+
+import { useLocalStorage } from "@/hook/useLocalstorage";
+import { Order, Prisma } from "@prisma/client";
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { useEffect, useState } from "react";
-import { toast } from "@/components/ui/use-toast";
-import { queryClient } from "@/components/provider";
-import { Order } from "@prisma/client";
-import { useLocalStorage } from "@/hook/useLocalstorage";
-import { useRouter } from "next/navigation";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { CheckCircle2, Plus } from "lucide-react";
+import React, { useState } from "react";
+import { deleteOrder, deleteOrders, getOrder } from "@/lib/actions/order";
+import Link from "next/link";
+interface TransactionTable
+  extends Prisma.OrderGetPayload<{
+    include: {
+      _count: true;
+      OrderItem: true;
+      sales_name: true;
+      customer_name: true;
+    };
+  }> {}
 
-export default function Dashboard() {
+const Page = () => {
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
   const { data } = useQuery({
     queryKey: ["orders"],
     queryFn: async () => await getOrder(parseInt(warehouseId)),
   });
   const [open, setOpen] = useState(false);
-  const router = useRouter();
+  const [openAdd, setOpenAdd] = useState(false);
   const [selected, setSelected] = useState<string>();
-  const deleteQuery = useMutation({
-    mutationFn: async (id: string) => await deleteOrder(id),
+
+  const deleteQuerys = useMutation({
+    mutationFn: async (transaction: Order[]) => await deleteOrders(transaction),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+
       setOpen(false);
       toast({
         description: (
@@ -87,19 +71,99 @@ export default function Dashboard() {
     },
     onError(error) {
       toast({
-        title: `Error`,
+        title: `Error: ${error.message}`,
         description: `${error.message}`,
         variant: "destructive",
       });
     },
   });
-  const handleDelete = (id: string) => {
-    deleteQuery.mutate(id);
+  const deleteQuery = useMutation({
+    mutationFn: async (id: string) => await deleteOrder(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+
+      setOpen(false);
+      toast({
+        description: (
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <span className="text-green-500">
+                <CheckCircle2 size={28} strokeWidth={1} />
+              </span>
+            </div>
+            <div>
+              <h3 className="text-lg">Order Deleted!</h3>
+            </div>
+          </div>
+        ),
+      });
+    },
+    onError(error) {
+      toast({
+        title: `Error: ${error.message}`,
+        description: `${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+  const columnsConfig: ColumnConfig<TransactionTable>[] = [
+    {
+      accessorKey: "customer_name.name",
+      title: "Customer Name",
+      extends: ["customer_name.phone", "customer_name.alamat"],
+    },
+    {
+      accessorKey: "sales_name.name",
+      title: "Sales Name",
+    },
+    {
+      accessorKey: "createdAt",
+      title: "Order Date",
+      type: "date",
+    },
+    {
+      accessorKey: "status",
+      title: "Status",
+    },
+    {
+      accessorKey: "totalAmount",
+      title: "Total Amount",
+      type: "currency",
+    },
+  ];
+
+  const actionsConfig: ActionConfig<TransactionTable>[] = [
+    {
+      label: "Copy Id",
+      onClick: (transaction: TransactionTable) =>
+        navigator.clipboard.writeText(JSON.stringify(transaction.order_id)),
+    },
+    {
+      label: "Delete",
+      onClick: (transaction: TransactionTable) => {
+        setOpen(true);
+        setSelected(transaction.order_id);
+      },
+    },
+  ];
+
+  const columns = createColumns({
+    columns: columnsConfig,
+    actions: actionsConfig,
+  });
+  const handleDelete = (selectedRows: TransactionTable[]) => {
+    // Implement your delete logic here
+    console.log("Deleted rows:", selectedRows);
+    deleteQuerys.mutate(selectedRows);
   };
 
+  const handlePrint = (selectedRows: TransactionTable[]) => {
+    // Implement your edit logic here
+    console.log("Edited rows:", selectedRows);
+  };
   if (!data) return null;
   return (
-    <main>
+    <div>
       <div className="mb-4">
         <div className="flex justify-end items-center">
           <div className="flex gap-2">
@@ -112,88 +176,12 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="flex items-center">
-        <div className="ml-auto flex items-center gap-2">
-          <Button size="sm" variant="outline" className="h-7 gap-1 text-sm">
-            <File className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only">Export</span>
-          </Button>
-        </div>
-      </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Sales</TableHead>
-            <TableHead>Customer</TableHead>
-            <TableHead className="hidden sm:table-cell">Alamat</TableHead>
-            <TableHead className="hidden sm:table-cell">Status</TableHead>
-            <TableHead className="hidden md:table-cell">Date</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
-            <TableHead></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.map((item, i) => {
-            return (
-              <TableRow key={i}>
-                <TableCell>
-                  <div className="font-medium capitalize">
-                    {item.sales_name?.name}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="font-medium capitalize">
-                    {item.customer_name?.name}
-                  </div>
-                  <div className="hidden text-xs text-muted-foreground md:inline">
-                    {item.customer_name?.phone}
-                  </div>
-                </TableCell>
-                <TableCell className="hidden sm:table-cell">
-                  {item.customer_name?.alamat}
-                </TableCell>
-                <TableCell className="hidden sm:table-cell">
-                  <Badge className="text-xs" variant="secondary">
-                    {item.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="hidden md:table-cell">
-                  {formatDate(item.createdAt)}
-                </TableCell>
-                <TableCell className="text-right">
-                  Rp. {formatRupiah(item.totalAmount || 0)}
-                </TableCell>
-                <TableCell className="flex items-center gap-2 justify-center">
-                  <Button size={"xs"}>
-                    <Printer size={16} />
-                  </Button>
-                  {item.status !== "ON_DELEVERY" && (
-                    <Button
-                      size={"xs"}
-                      onClick={() =>
-                        router.push(`/dashboard/shipping/${item.order_id}`)
-                      }
-                    >
-                      <Truck size={16} />
-                    </Button>
-                  )}
-                  <Button
-                    onClick={() => {
-                      setSelected(item.order_id);
-                      setOpen(true);
-                    }}
-                    size={"xs"}
-                    variant={"destructive"}
-                  >
-                    Delete
-                  </Button>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-
+      <DataTable
+        columns={columns}
+        data={[...data]}
+        onDelete={handleDelete}
+        onPrint={handlePrint}
+      />
       <AlertDialog open={open}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -214,7 +202,7 @@ export default function Dashboard() {
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => handleDelete(selected as string)}
+              onClick={() => deleteQuery.mutate(selected || "")}
               className="bg-destructive hover:bg-destructive"
             >
               Continue
@@ -222,6 +210,8 @@ export default function Dashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </main>
+    </div>
   );
-}
+};
+
+export default Page;
