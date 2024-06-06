@@ -91,6 +91,11 @@ export const addItem = async ({
   };
 }) => {
   try {
+    const order = await prisma.order.findUnique({
+      where: {
+        order_id: data.order_id || "",
+      },
+    });
     let dikali: number = 1;
     const satuan = await prisma.satuan.findUnique({
       where: {
@@ -115,12 +120,29 @@ export const addItem = async ({
     await prisma.outbound.create({
       data: {
         quantity: data.quantity * dikali,
-        notes: data.notes || "",
+        notes: `Outbound for order : ${order?.order_code}
+        ${data.notes}`,
         inputBy: data.inputby || "",
         warehouse_id: data.warehouse_id || 1,
         product_id: data.product_id,
       },
     });
+    const stock = await prisma.stock.findFirst({
+      where: {
+        product_id: data.product_id,
+        warehouse_id: data.warehouse_id,
+      },
+    });
+    if (stock) {
+      await prisma.stock.update({
+        where: {
+          stock_id: stock.stock_id,
+        },
+        data: {
+          total: stock.total - data.quantity * dikali,
+        },
+      });
+    }
     return item;
   } catch (error) {
     console.error(error);
