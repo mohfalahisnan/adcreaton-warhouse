@@ -85,43 +85,46 @@ export const initialOrder = async ({
 export const addItem = async ({
   data,
 }: {
-  data: Omit<OrderItem, "order_item_id">;
+  data: Omit<OrderItem, "order_item_id"> & {
+    inputby: string;
+    warehouse_id: number;
+  };
 }) => {
   try {
-    const existingItem = await prisma.orderItem.findFirst({
+    let dikali: number = 1;
+    const satuan = await prisma.satuan.findUnique({
       where: {
-        order_id: data.order_id, // Ganti dengan nama field yang sesuai jika nama field yang digunakan berbeda
-        product_id: data.product_id, // Ganti dengan nama field yang sesuai jika nama field yang digunakan berbeda
+        satuan_id: data.satuan_id || 1,
       },
     });
-
-    if (existingItem) {
-      try {
-        const exist = await prisma.orderItem.update({
-          where: {
-            order_item_id: existingItem.order_item_id,
-            product_id: data.product_id,
-            order_id: data.order_id,
-          },
-          data: {
-            quantity: existingItem.quantity + data.quantity,
-          },
-        });
-        return exist;
-      } catch (error) {
-        console.log(error);
-        throw new Error("Failed to fetch");
-      }
+    if (!satuan) {
+      dikali = 1;
+    } else {
+      dikali = satuan.multiplier;
     }
-
     const item = await prisma.orderItem.create({
-      data: data,
+      data: {
+        quantity: data.quantity,
+        notes: data.notes || "",
+        product_id: data.product_id,
+        discount: data.discount,
+        order_id: data.order_id,
+        satuan_id: data.satuan_id,
+      },
+    });
+    await prisma.outbound.create({
+      data: {
+        quantity: data.quantity * dikali,
+        notes: data.notes || "",
+        inputBy: data.inputby || "",
+        warehouse_id: data.warehouse_id || 1,
+        product_id: data.product_id,
+      },
     });
     return item;
   } catch (error) {
-    const errorMessage = handlePrismaError(error);
-    console.error(errorMessage);
-    throw new Error(`Failed to fetch categories: ${errorMessage}`);
+    console.error(error);
+    throw new Error(`Failed to fetch categories: ${error}`);
   }
 };
 
@@ -129,7 +132,9 @@ export const getOrderById = async (
   id: string
 ): Promise<Prisma.OrderGetPayload<{
   include: {
-    OrderItem: { include: { product: true } };
+    OrderItem: {
+      include: { product: { include: { Satuan: true } }; satuan: true };
+    };
     customer_name: true;
     sales_name: true;
   };
@@ -142,7 +147,12 @@ export const getOrderById = async (
       include: {
         OrderItem: {
           include: {
-            product: true,
+            product: {
+              include: {
+                Satuan: true,
+              },
+            },
+            satuan: true,
           },
         },
         customer_name: true,

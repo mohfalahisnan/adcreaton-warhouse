@@ -18,7 +18,7 @@ export function generateOrderCode(): string {
   const formattedDate = getFormattedDate(currentDate);
   const uniqueNumber = generateUniqueNumber();
 
-  return `ORD-${formattedDate}-${uniqueNumber}`;
+  return `${formattedDate}${uniqueNumber}`;
 }
 
 export function generateShipmentCode(): string {

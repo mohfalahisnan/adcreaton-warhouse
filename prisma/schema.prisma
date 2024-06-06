@@ -96,10 +96,20 @@ model OrderItem {
   product_id    String
   product       Product @relation(fields: [product_id], references: [product_id])
   discount      Float?  @default(0)
+  satuan_id     Int?
+  satuan        Satuan? @relation(fields: [satuan_id], references: [satuan_id])
 
   notes    String?
   Order    Order?  @relation(fields: [order_id], references: [order_id], onDelete: Cascade)
   order_id String?
+}
+
+model TierPrice {
+  tier_price_id Int     @id @default(autoincrement())
+  name          String
+  value         Float
+  product_id    String
+  product       Product @relation(fields: [product_id], references: [product_id])
 }
 
 model Inbound {
@@ -213,6 +223,7 @@ model Product {
   Inbound   Inbound[]
   Outbound  Outbound[]
   Satuan    Satuan[]
+  TierPrice TierPrice[]
 }
 
 model Stock {
@@ -232,7 +243,8 @@ model Satuan {
   multiplier Int
 
   product_id String
-  product    Product @relation(fields: [product_id], references: [product_id], onDelete: Cascade, onUpdate: Cascade)
+  product    Product     @relation(fields: [product_id], references: [product_id], onDelete: Cascade, onUpdate: Cascade)
+  OrderItem  OrderItem[]
 }
 
 model Category {
