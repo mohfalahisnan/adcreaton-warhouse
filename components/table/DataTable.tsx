@@ -11,6 +11,7 @@ import {
   VisibilityState,
   SortingState,
   ColumnFiltersState,
+  FilterFn,
 } from "@tanstack/react-table";
 
 import {
@@ -48,6 +49,8 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   onDelete: (selectedRows: TData[]) => void;
   onPrint: (selectedRows: TData[]) => void;
+  printButton?: boolean;
+  deleteButton?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -55,12 +58,32 @@ export function DataTable<TData, TValue>({
   data,
   onDelete,
   onPrint,
+  printButton = true,
+  deleteButton = true,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = useState({});
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [openDelete, setOpenDelete] = useState(false);
+  const [globalFilter, setGlobalFilter] = useState("");
+
+  const customFilter: FilterFn<any> = (row, columnId, filterValue) => {
+    const name = row.getValue("name");
+    const notes = row.getValue("notes");
+    const desc = row.getValue("inputBy");
+    const productName = row.original?.product?.name;
+    return (
+      name?.toString().toLowerCase().includes(filterValue.toLowerCase()) ||
+      notes?.toString().toLowerCase().includes(filterValue.toLowerCase()) ||
+      desc?.toString().toLowerCase().includes(filterValue.toLowerCase()) ||
+      productName
+        ?.toString()
+        .toLowerCase()
+        .includes(filterValue.toLowerCase()) ||
+      false
+    );
+  };
 
   const table = useReactTable({
     data,
@@ -78,7 +101,9 @@ export function DataTable<TData, TValue>({
       columnFilters,
       columnVisibility,
       rowSelection,
+      globalFilter,
     },
+    globalFilterFn: customFilter, // Use the custom filter function
   });
 
   const selectedRows = table
@@ -90,10 +115,8 @@ export function DataTable<TData, TValue>({
       <div className="flex items-center py-4">
         <Input
           placeholder="Search..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
-          }
+          value={globalFilter}
+          onChange={(event) => setGlobalFilter(event.target.value)}
           className="max-w-sm h-9"
         />
         <DropdownMenu>
@@ -125,24 +148,28 @@ export function DataTable<TData, TValue>({
       </div>
       <div className="flex items-center justify-start space-x-2 py-4">
         <i className="text-muted-foreground">With selected :</i>
-        <Button
-          disabled={selectedRows.length <= 0}
-          variant="outline"
-          className="ml-auto"
-          size={"sm"}
-          onClick={() => setOpenDelete(true)}
-        >
-          Delete
-        </Button>
-        <Button
-          disabled={selectedRows.length <= 0}
-          variant="outline"
-          className="ml-auto"
-          size={"sm"}
-          onClick={() => onPrint(selectedRows)}
-        >
-          Print
-        </Button>
+        {deleteButton && (
+          <Button
+            disabled={selectedRows.length <= 0}
+            variant="outline"
+            className="ml-auto"
+            size={"sm"}
+            onClick={() => setOpenDelete(true)}
+          >
+            Delete
+          </Button>
+        )}
+        {printButton && (
+          <Button
+            disabled={selectedRows.length <= 0}
+            variant="outline"
+            className="ml-auto"
+            size={"sm"}
+            onClick={() => onPrint(selectedRows)}
+          >
+            Print
+          </Button>
+        )}
       </div>
       <div className="rounded-md border">
         <Table>

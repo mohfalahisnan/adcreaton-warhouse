@@ -30,3 +30,22 @@ export const createWarehouse = async ({
     throw new Error(`Failed to fetch categories: ${errorMessage}`);
   }
 };
+
+export const getWarehouse = async ({
+  warehouse_id,
+}: {
+  warehouse_id: number;
+}) => {
+  try {
+    const warehouse = await prisma.warehouse.findUnique({
+      where: {
+        warehouse_id: Number(warehouse_id),
+      },
+    });
+    return warehouse;
+  } catch (error) {
+    const errorMessage = handlePrismaError(error);
+    console.error(errorMessage);
+    throw new Error(`Failed to fetch categories: ${errorMessage}`);
+  }
+};

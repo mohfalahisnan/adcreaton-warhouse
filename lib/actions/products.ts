@@ -68,6 +68,7 @@ export const deleteProduct = async (id: string) => {
     });
     return product;
   } catch (error) {
+    console.log(error);
     throw new Error("falied");
   }
 };

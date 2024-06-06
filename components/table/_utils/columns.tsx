@@ -25,6 +25,7 @@ export type ColumnConfig<T> = {
   title: string;
   type?: "date" | "number" | "string" | "currency";
   extends?: DeepKeys<T>[];
+  renderCell?: (cellValue: any, row: T) => React.ReactNode;
 };
 
 export type ActionConfig<T> = {
@@ -35,36 +36,48 @@ export type ActionConfig<T> = {
 export type CreateColumnsProps<T> = {
   columns: ColumnConfig<T>[];
   actions: ActionConfig<T>[];
+  showAction?: boolean;
+  selectable?: boolean;
 };
+
 const getNestedValue = (obj: any, path: string) => {
   return path.split(".").reduce((value, key) => value?.[key], obj);
 };
+
 export const createColumns = <T extends Record<string, any>>({
   columns,
   actions,
+  showAction = true,
+  selectable = true,
 }: CreateColumnsProps<T>): ColumnDef<T>[] => [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
+  ...(selectable
+    ? [
+        {
+          id: "select",
+          header: ({ table }: { table: any }) => (
+            <Checkbox
+              checked={
+                table.getIsAllPageRowsSelected() ||
+                (table.getIsSomePageRowsSelected() && "indeterminate")
+              }
+              onCheckedChange={(value) =>
+                table.toggleAllPageRowsSelected(!!value)
+              }
+              aria-label="Select all"
+            />
+          ),
+          cell: ({ row }: { row: any }) => (
+            <Checkbox
+              checked={row.getIsSelected()}
+              onCheckedChange={(value) => row.toggleSelected(!!value)}
+              aria-label="Select row"
+            />
+          ),
+          enableSorting: false,
+          enableHiding: false,
+        },
+      ]
+    : []),
   ...columns.map((column) => ({
     accessorKey: column.accessorKey,
     header: ({ column: col }: { column: ColumnDef<T> }) => (
@@ -76,12 +89,27 @@ export const createColumns = <T extends Record<string, any>>({
         column.accessorKey as string
       );
 
+      if (column.renderCell) {
+        return column.renderCell(cellValue, row.original);
+      }
+
+      if (Array.isArray(cellValue)) {
+        return (
+          <ul>
+            {cellValue.map((item, index) => (
+              <li key={index}>{item}</li>
+            ))}
+          </ul>
+        );
+      }
+
       if (column.type === "date") {
         const date = new Date(cellValue);
         return date.toLocaleDateString(); // Adjust the format here if needed
       } else if (column.type === "currency") {
         return `Rp ${formatRupiah(cellValue)}`;
       }
+
       return (
         <>
           <h3>{cellValue}</h3>
@@ -93,32 +121,36 @@ export const createColumns = <T extends Record<string, any>>({
       );
     },
   })),
-  {
-    id: "actions",
-    cell: ({ row }: { row: any }) => {
-      const rowData = row.original;
+  ...(showAction
+    ? [
+        {
+          id: "actions",
+          cell: ({ row }: { row: any }) => {
+            const rowData = row.original;
 
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            {actions.map((action, index) => (
-              <DropdownMenuItem
-                key={index}
-                onClick={() => action.onClick(rowData)}
-              >
-                {action.label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
+            return (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  {actions.map((action, index) => (
+                    <DropdownMenuItem
+                      key={index}
+                      onClick={() => action.onClick(rowData)}
+                    >
+                      {action.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            );
+          },
+        },
+      ]
+    : []),
 ];

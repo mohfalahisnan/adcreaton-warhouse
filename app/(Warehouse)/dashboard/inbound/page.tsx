@@ -20,11 +20,11 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import React, { useEffect, useState } from "react";
-import { useGetProducts } from "@/hook/useProduct";
-import { ProductWithStock } from "@/interface";
-import { Satuan } from "@prisma/client";
+import { Inbound, Product, Satuan } from "@prisma/client";
 import { convertTotalStockToUnits } from "@/lib/stockInUnit";
-import UnitForm from "@/components/UnitForm";
+import { useQuery } from "@tanstack/react-query";
+import { getInbound } from "@/lib/actions/inbound";
+import InboundForm from "@/components/InboundForm";
 
 const StockCell = ({ total, Satuan }: { total: number; Satuan: Satuan[] }) => {
   const [stockInUnits, setStockInUnits] = useState<{ [key: string]: number }>(
@@ -55,9 +55,16 @@ const StockCell = ({ total, Satuan }: { total: number; Satuan: Satuan[] }) => {
   );
 };
 
+interface IInbound extends Inbound {
+  product: Product | null;
+}
+
 const Page = () => {
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
-  const { data } = useGetProducts({});
+  const { data } = useQuery({
+    queryKey: ["inbound"],
+    queryFn: async () => await getInbound(Number(warehouseId)),
+  });
   const [open, setOpen] = useState(false);
   const [openAdd, setOpenAdd] = useState(false);
   const [selected, setSelected] = useState<string>();
@@ -120,62 +127,41 @@ const Page = () => {
   //       });
   //     },
   //   });
-  const columnsConfig: ColumnConfig<ProductWithStock>[] = [
+  const columnsConfig: ColumnConfig<IInbound>[] = [
     {
-      accessorKey: "name",
-      title: "Name",
+      accessorKey: "product.name",
+      title: "Product",
     },
     {
-      accessorKey: "stock",
-      title: "Stock",
-      renderCell: (cellValue, row) => (
-        <>
-          {row.stock.map((item, i) => {
-            if (warehouseId === item.warehouse_id.toString()) {
-              return (
-                <h3 key={i}>
-                  Total: {item.total}
-                  <StockCell key={i} total={item.total} Satuan={row.Satuan} />
-                </h3>
-              );
-            }
-          })}
-        </>
-      ),
+      accessorKey: "quantity",
+      title: "Quantity",
     },
     {
-      accessorKey: "Satuan",
-      title: "Available Unit",
-      renderCell: (cellValue) => (
-        <ul>
-          {cellValue.map((item: Satuan, index: number) => (
-            <li key={index} className="text-xs">
-              {item.name}({item.multiplier})
-            </li>
-          ))}
-        </ul>
-      ),
+      accessorKey: "notes",
+      title: "Notes",
     },
     {
-      accessorKey: "Satuan",
-      title: "Action",
-      renderCell(cellValue, row) {
-        return <UnitForm id={row.product_id} />;
-      },
+      accessorKey: "createdAt",
+      title: "Created At",
+      type: "date",
+    },
+    {
+      accessorKey: "inputBy",
+      title: "Input By",
     },
   ];
 
-  const actionsConfig: ActionConfig<ProductWithStock>[] = [
+  const actionsConfig: ActionConfig<IInbound>[] = [
     {
       label: "Copy Id",
-      onClick: (product: ProductWithStock) =>
+      onClick: (product: Inbound) =>
         navigator.clipboard.writeText(JSON.stringify(product.product_id)),
     },
     {
       label: "Delete",
-      onClick: (product: ProductWithStock) => {
+      onClick: (product: IInbound) => {
         setOpen(true);
-        setSelected(product.product_id);
+        setSelected(product.product_id || "");
       },
     },
   ];
@@ -184,26 +170,29 @@ const Page = () => {
     columns: columnsConfig,
     actions: actionsConfig,
     showAction: false,
+    selectable: false,
   });
-  const handleDelete = (selectedRows: ProductWithStock[]) => {
+  const handleDelete = (selectedRows: IInbound[]) => {
     // Implement your delete logic here
     console.log("Deleted rows:", selectedRows);
     // deleteQuerys.mutate(selectedRows);
   };
 
-  const handlePrint = (selectedRows: ProductWithStock[]) => {
+  const handlePrint = (selectedRows: IInbound[]) => {
     // Implement your edit logic here
     console.log("Edited rows:", selectedRows);
   };
   if (!data) return null;
   return (
     <div>
+      <InboundForm />
       <DataTable
         columns={columns}
         data={data}
         onDelete={handleDelete}
         onPrint={handlePrint}
         printButton={false}
+        deleteButton={false}
       />
       <AlertDialog open={open}>
         <AlertDialogContent>

@@ -4,6 +4,8 @@ import {
   Car,
   DollarSign,
   FileBarChart,
+  FileMinus2,
+  FilePlus2,
   HomeIcon,
   Settings,
   Truck,
@@ -36,6 +38,16 @@ const menu: Menu[] = [
     title: "Stock",
     url: "/dashboard/stock",
     icon: <BarChart />,
+  },
+  {
+    title: "Inbound",
+    url: "/dashboard/inbound",
+    icon: <FilePlus2 />,
+  },
+  {
+    title: "Outbound",
+    url: "/dashboard/outbound",
+    icon: <FileMinus2 />,
   },
   {
     title: "Employee",

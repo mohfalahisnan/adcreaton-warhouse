@@ -30,7 +30,7 @@ interface DrawerDialogDemoProps {
   triggerTitle?: string;
   triggerContent?: React.ReactNode;
   open?: boolean; // Menambahkan prop open
-  onOpenChange?: (open: boolean) => void; // Menambahkan prop onOpenChange
+  onOpenChange?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export function ResponsiveDialog({

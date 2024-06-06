@@ -104,7 +104,7 @@ model OrderItem {
 
 model Inbound {
   inbound_id String    @id @default(uuid())
-  product    Product   @relation(fields: [product_id], references: [product_id])
+  product    Product?  @relation(fields: [product_id], references: [product_id], onDelete: SetNull, onUpdate: Cascade)
   quantity   Float
   notes      String
   warehouse  Warehouse @relation(fields: [warehouse_id], references: [warehouse_id])
@@ -112,13 +112,14 @@ model Inbound {
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  product_id   String
+  product_id   String?
   warehouse_id Int
+  inputBy      String
 }
 
 model Outbound {
   outbound_id String    @id @default(uuid())
-  product     Product   @relation(fields: [product_id], references: [product_id])
+  product     Product?  @relation(fields: [product_id], references: [product_id], onDelete: SetNull, onUpdate: Cascade)
   quantity    Float
   notes       String
   warehouse   Warehouse @relation(fields: [warehouse_id], references: [warehouse_id])
@@ -126,8 +127,9 @@ model Outbound {
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  product_id   String
+  product_id   String?
   warehouse_id Int
+  inputBy      String
 }
 
 model Shipment {
@@ -171,9 +173,11 @@ model Car {
 }
 
 model Warehouse {
-  warehouse_id Int    @id @default(autoincrement())
+  warehouse_id Int     @id @default(autoincrement())
   name         String
   location     String
+  address      String?
+  phone        String?
 
   customer Customer[]
   stock    Stock[]
@@ -224,7 +228,7 @@ model Stock {
 
 model Satuan {
   satuan_id  Int    @id @default(autoincrement())
-  name       String @unique
+  name       String
   multiplier Int
 
   product_id String
