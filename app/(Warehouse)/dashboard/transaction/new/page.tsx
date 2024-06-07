@@ -11,49 +11,41 @@ import {
 import { toast } from "@/components/ui/use-toast";
 import { useLocalStorage } from "@/hook/useLocalstorage";
 import { getSales } from "@/lib/actions/accounts";
-import { getOrderById, initialOrder } from "@/lib/actions/order";
+import {
+  deleteOrder,
+  getOrderById,
+  initialOrder,
+  updateOrder,
+} from "@/lib/actions/order";
 import { getWarehouse } from "@/lib/actions/warehouse";
 import { generateOrderCode } from "@/lib/generateCode";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Check } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+
 import { Customer, User } from "@prisma/client";
 import { getCustomersWarehouse } from "@/lib/actions/customer";
 
-import { CustomerSelect } from "./select";
+import { CustomerSelect, SalesSelect } from "./select";
 import AddOrderItem from "./addOrderItem";
 import { formatRupiah } from "@/lib/formatRupiah";
 import { tierPriceApplied } from "@/lib/tierPriceApplied";
-import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { CalculateTotalAmount } from "@/lib/CalculateTotalAmount";
 
 function Page() {
   //state
+  const navigation = useRouter();
   const [warehouseId] = useLocalStorage("warehouse_id", "1");
-  const session = useSession();
   const [storedSales, setStoredSales] = useLocalStorage("sales_id", "");
   const [salesId, setSalesId] = useState<string>();
   const [customerId, setCustomerId] = useState<Customer>();
   const [orderId, setOrderId] = useState<string>();
   const [orderCode, setOrderCode] = useState<string>();
-
+  const [totalAmount, setTotalAmount] = useState<number>(0);
   //query
   const warhouse = useQuery({
     queryKey: ["warehouse", warehouseId],
-    queryFn: () => getWarehouse({ warehouse_id: Number(warehouseId) }),
+    queryFn: () => getWarehouse({ warehouse_id: parseInt(warehouseId) }),
   });
   const queryGetSales = useQuery({
     queryKey: ["sales"],
@@ -95,8 +87,63 @@ function Page() {
     },
   });
 
+  const queryOrderSave = useMutation({
+    mutationFn: async () => {
+      if (!salesId) return null;
+      return await updateOrder({
+        data: {
+          order_id: orderId || "",
+          customer_id: customerId?.customer_id || 0,
+          sales_id: salesId || "",
+          order_code: "",
+          totalAmount: null,
+          warehouse_id: parseInt(warehouseId),
+          shipment_id: null,
+          status: "ARCHIVED",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+    },
+    onSuccess: (data) => {
+      navigation.push("/dashboard/transaction");
+    },
+    onError(error) {
+      toast({
+        title: `Error: ${error.message}`,
+        description: `${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
   const getOrderItem = useQuery({
     queryKey: ["orderItem", orderId],
+    queryFn: async () => {
+      if (orderId) {
+        return await getOrderById(orderId);
+      }
+    },
+    enabled: !!orderId,
+  });
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await deleteOrder(id);
+    },
+    onSuccess: () => {
+      navigation.push("/dashboard/transaction");
+    },
+    onError(error) {
+      toast({
+        title: `Error: ${error.message}`,
+        description: `${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const currentOrder = useQuery({
+    queryKey: ["order", orderId],
     queryFn: async () => {
       if (orderId) {
         return await getOrderById(orderId);
@@ -117,6 +164,32 @@ function Page() {
       queryOrder.mutate();
     }
   }, []);
+
+  useEffect(() => {
+    if (getOrderItem.data) {
+      setTotalAmount(CalculateTotalAmount({ data: getOrderItem.data }));
+    }
+  }, [getOrderItem.data]);
+
+  const handleSave = () => {
+    if (!customerId) {
+      toast({
+        title: "Error",
+        description: "Pelanggan belum dipilih",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!salesId) {
+      toast({
+        title: "Error",
+        description: "Sales belum dipilih",
+        variant: "destructive",
+      });
+      return;
+    }
+    queryOrderSave.mutate();
+  };
 
   if (queryGetSales.isLoading) return <div>Loading...</div>;
   if (queryGetCustomers.isLoading) return <div>Loading...</div>;
@@ -238,13 +311,18 @@ function Page() {
               <TableHead colSpan={7} className="text-right">
                 Total
               </TableHead>
-              <TableHead>Rp.431124</TableHead>
+              <TableHead>Rp.{formatRupiah(totalAmount)}</TableHead>
             </TableRow>
           </TableHeader>
         </Table>
         <div className="flex items-end justify-end gap-4 mt-4">
-          <Button variant="outline">Cancel</Button>
-          <Button>Save</Button>
+          <Button
+            variant="outline"
+            onClick={() => deleteMutation.mutate(orderId || "")}
+          >
+            Cancel
+          </Button>
+          <Button onClick={handleSave}>Save</Button>
         </div>
       </div>
     </div>
@@ -252,62 +330,3 @@ function Page() {
 }
 
 export default Page;
-
-export const SalesSelect = ({
-  data,
-  value,
-  setValue,
-}: {
-  data: User[];
-  value: string;
-  setValue: React.Dispatch<React.SetStateAction<string | undefined>>;
-}) => {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          role="combobox"
-          aria-expanded={open}
-          className="w-[200px] justify-start p-0 h-auto text-left capitalize"
-        >
-          {value
-            ? data.find((sales) => sales.user_id === value)?.name
-            : "Select Sales..."}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
-        <Command>
-          <CommandInput placeholder="Search Sales..." />
-          <CommandList>
-            <CommandEmpty>No sales found.</CommandEmpty>
-            <CommandGroup>
-              {data?.length > 0 &&
-                data.map((sales) => (
-                  <CommandItem
-                    key={sales.user_id}
-                    value={sales.name}
-                    onSelect={(currentValue) => {
-                      setValue(currentValue === value ? "" : currentValue);
-                      setOpen(false);
-                    }}
-                    className="capitalize"
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        value === sales.user_id ? "opacity-100" : "opacity-0",
-                      )}
-                    />
-                    {sales.name}
-                  </CommandItem>
-                ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-};

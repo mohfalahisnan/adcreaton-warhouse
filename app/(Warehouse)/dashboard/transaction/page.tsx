@@ -32,7 +32,12 @@ interface TransactionTable
   extends Prisma.OrderGetPayload<{
     include: {
       _count: true;
-      OrderItem: true;
+      OrderItem: {
+        include: {
+          product: true;
+          satuan: true;
+        };
+      };
       sales_name: true;
       customer_name: true;
     };
@@ -42,7 +47,7 @@ const Page = () => {
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
   const { data } = useQuery({
     queryKey: ["orders"],
-    queryFn: async () => await getOrder(parseInt(warehouseId)),
+    queryFn: async () => await getOrder(parseInt(warehouseId), true),
   });
   const [open, setOpen] = useState(false);
   const [openAdd, setOpenAdd] = useState(false);
@@ -117,6 +122,28 @@ const Page = () => {
       title: "Sales Name",
     },
     {
+      accessorKey: "order_code",
+      title: "Order",
+      renderCell(cellValue, row) {
+        return (
+          <div>
+            {row.order_code}
+            <ol>
+              {row.OrderItem.map((item, i) => (
+                <li key={item.order_item_id}>
+                  {i + 1}.{" "}
+                  <span>
+                    {item.product.name} x{item.quantity}
+                    {item.satuan?.name}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        );
+      },
+    },
+    {
       accessorKey: "createdAt",
       title: "Order Date",
       type: "date",
@@ -167,7 +194,7 @@ const Page = () => {
       <div className="mb-4">
         <div className="flex justify-end items-center">
           <div className="flex gap-2">
-            <Link href={"/dashboard/transaction/add"}>
+            <Link href={"/dashboard/transaction/new "}>
               <Button size={"sm"} className="flex items-center gap-2">
                 <Plus size={12} /> Transaction
               </Button>
@@ -178,7 +205,7 @@ const Page = () => {
 
       <DataTable
         columns={columns}
-        data={[...data]}
+        data={data as TransactionTable[]}
         onDelete={handleDelete}
         onPrint={handlePrint}
       />

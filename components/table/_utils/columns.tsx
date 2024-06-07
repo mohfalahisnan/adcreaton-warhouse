@@ -107,7 +107,11 @@ export const createColumns = <T extends Record<string, any>>({
         const date = new Date(cellValue);
         return date.toLocaleDateString(); // Adjust the format here if needed
       } else if (column.type === "currency") {
-        return `Rp ${formatRupiah(cellValue)}`;
+        if (cellValue > 0) {
+          return `Rp ${formatRupiah(cellValue)}`;
+        } else {
+          return `-`;
+        }
       }
 
       return (

@@ -112,6 +112,9 @@ const TransactionForm = ({ onSuccess }: { onSuccess?: () => void }) => {
           quantity: data.quantity,
           notes: data.notes,
           discount: 0,
+          inputby: "",
+          satuan_id: 0,
+          warehouse_id: 1,
         },
       });
     },

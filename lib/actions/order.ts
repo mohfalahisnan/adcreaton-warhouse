@@ -2,6 +2,8 @@
 import { prisma } from "@/lib/prisma";
 import { Order, OrderItem, Prisma, Product, StatusOrder } from "@prisma/client";
 import { handlePrismaError } from "../handlePrismaError";
+import { CustomError } from "../CustomError";
+import { CalculateTotalAmount } from "../CalculateTotalAmount";
 
 export interface ISelectedProduct extends Product {
   count: number;
@@ -82,6 +84,37 @@ export const initialOrder = async ({
   }
 };
 
+export const updateOrder = async ({ data }: { data: Order }) => {
+  const saved = await prisma.order.findUnique({
+    where: {
+      order_id: data.order_id,
+    },
+    include: {
+      OrderItem: {
+        include: {
+          product: true,
+          satuan: true,
+        },
+      },
+    },
+  });
+  if (!saved) {
+    throw new Error("Order not found");
+  }
+  const order = await prisma.order.update({
+    where: {
+      order_id: data.order_id,
+    },
+    data: {
+      customer_id: data.customer_id,
+      totalAmount: CalculateTotalAmount({ data: saved }),
+      sales_id: data.sales_id,
+      warehouse_id: data.warehouse_id,
+    },
+  });
+  return order;
+};
+
 export const addItem = async ({
   data,
 }: {
@@ -96,17 +129,34 @@ export const addItem = async ({
         product_id: data.product_id,
       },
     });
+    if (!product) {
+      throw new CustomError("Product not found", {
+        productId: data.product_id,
+      });
+    }
+
     const stock = await prisma.stock.findFirst({
       where: {
         product_id: data.product_id,
         warehouse_id: data.warehouse_id,
       },
     });
+    if (!stock) {
+      throw new CustomError("Stock not found", {
+        productId: data.product_id,
+        warehouseId: data.warehouse_id,
+      });
+    }
+    if (stock.total <= 0) {
+      throw new CustomError("Stock not enough", { currentStock: stock.total });
+    }
+
     const order = await prisma.order.findUnique({
       where: {
         order_id: data.order_id || "",
       },
     });
+
     let dikali: number = 1;
     const satuan = await prisma.satuan.findUnique({
       where: {
@@ -118,17 +168,12 @@ export const addItem = async ({
     } else {
       dikali = satuan.multiplier;
     }
-    if (!stock) {
-      throw new Error("Stock not found");
-    }
-    if (stock.total <= 0) {
-      throw new Error("Stock not enough");
-    }
+
     let totalStock = data.quantity * dikali;
     console.log("--------- stock :", totalStock);
-    if (stock.total <= 0 || stock.total < totalStock) {
-      throw new Error(
-        `Insufficient stock for product ${product?.name}. Requested quantity: ${data.quantity} ${satuan?.name}, current stock: ${stock.total}.`
+    if (stock.total < totalStock) {
+      throw new CustomError(
+        `Insufficient stock: ${totalStock} ${product.name}, current stock ${stock.total}`
       );
     }
 
@@ -142,34 +187,37 @@ export const addItem = async ({
         satuan_id: data.satuan_id,
       },
     });
+
     await prisma.outbound.create({
       data: {
         quantity: data.quantity * dikali,
-        notes: `Outbound for order : ${order?.order_code}
-        ${data.notes}`,
+        notes: `Outbound for order: ${order?.order_code} ${data.notes}`,
         inputBy: data.inputby || "",
         warehouse_id: data.warehouse_id || 1,
         product_id: data.product_id,
       },
     });
 
-    if (stock) {
-      await prisma.stock.update({
-        where: {
-          stock_id: stock.stock_id,
-        },
-        data: {
-          total: stock.total - data.quantity * dikali,
-        },
-      });
-    }
-    return;
+    await prisma.stock.update({
+      where: {
+        stock_id: stock.stock_id,
+      },
+      data: {
+        total: stock.total - data.quantity * dikali,
+      },
+    });
   } catch (error) {
-    console.error(error);
-    throw new Error(`Failed to fetch: ${error}`);
+    if (error instanceof CustomError) {
+      console.error("CustomError:", error.message, error.details);
+      throw new Error(`Failed to process request: ${error.message}`);
+    } else {
+      console.error("Unexpected Error:", error);
+      throw new Error(
+        `An unexpected error occurred: ${(error as Error).message}`
+      );
+    }
   }
 };
-
 export const getOrderById = async (
   id: string
 ): Promise<Prisma.OrderGetPayload<{
@@ -208,7 +256,7 @@ export const getOrderById = async (
   }
 };
 
-export const getOrder = async (warehouse_id: number) => {
+export const getOrder = async (warehouse_id: number, depth?: boolean) => {
   try {
     const order = await prisma.order.findMany({
       where: {
@@ -216,7 +264,7 @@ export const getOrder = async (warehouse_id: number) => {
       },
       include: {
         _count: true,
-        OrderItem: true,
+        OrderItem: depth ? { include: { product: true, satuan: true } } : true,
         sales_name: true,
         customer_name: true,
       },

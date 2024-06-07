@@ -37,3 +37,20 @@ export const newStock = async (
     throw new Error("Failed to fetch");
   }
 };
+
+export const getStockByProduct = async (
+  productId: string,
+  warehouseId: number
+) => {
+  try {
+    return await prisma.stock.findFirst({
+      where: {
+        product_id: productId,
+        warehouse_id: warehouseId,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    throw new Error("Failed to fetch");
+  }
+};

@@ -13,7 +13,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { Customer, Product, Satuan } from "@prisma/client";
+import { Customer, Product, Satuan, User } from "@prisma/client";
 import {
   Select,
   SelectTrigger,
@@ -173,5 +173,64 @@ export const SatuanSelect = ({
         ))}
       </SelectContent>
     </Select>
+  );
+};
+
+export const SalesSelect = ({
+  data,
+  value,
+  setValue,
+}: {
+  data: User[];
+  value: string;
+  setValue: React.Dispatch<React.SetStateAction<string | undefined>>;
+}) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          role="combobox"
+          aria-expanded={open}
+          className="w-[200px] justify-start p-0 h-auto text-left capitalize"
+        >
+          {value
+            ? data.find((sales) => sales.user_id === value)?.name
+            : "Select Sales..."}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[200px] p-0">
+        <Command>
+          <CommandInput placeholder="Search Sales..." />
+          <CommandList>
+            <CommandEmpty>No sales found.</CommandEmpty>
+            <CommandGroup>
+              {data?.length > 0 &&
+                data.map((sales) => (
+                  <CommandItem
+                    key={sales.user_id}
+                    value={sales.name}
+                    onSelect={(currentValue) => {
+                      setValue(currentValue === value ? "" : currentValue);
+                      setOpen(false);
+                    }}
+                    className="capitalize"
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === sales.user_id ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                    {sales.name}
+                  </CommandItem>
+                ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 };
