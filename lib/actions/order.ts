@@ -91,6 +91,17 @@ export const addItem = async ({
   };
 }) => {
   try {
+    const product = await prisma.product.findUnique({
+      where: {
+        product_id: data.product_id,
+      },
+    });
+    const stock = await prisma.stock.findFirst({
+      where: {
+        product_id: data.product_id,
+        warehouse_id: data.warehouse_id,
+      },
+    });
     const order = await prisma.order.findUnique({
       where: {
         order_id: data.order_id || "",
@@ -107,7 +118,21 @@ export const addItem = async ({
     } else {
       dikali = satuan.multiplier;
     }
-    const item = await prisma.orderItem.create({
+    if (!stock) {
+      throw new Error("Stock not found");
+    }
+    if (stock.total <= 0) {
+      throw new Error("Stock not enough");
+    }
+    let totalStock = data.quantity * dikali;
+    console.log("--------- stock :", totalStock);
+    if (stock.total <= 0 || stock.total < totalStock) {
+      throw new Error(
+        `Insufficient stock for product ${product?.name}. Requested quantity: ${data.quantity} ${satuan?.name}, current stock: ${stock.total}.`
+      );
+    }
+
+    await prisma.orderItem.create({
       data: {
         quantity: data.quantity,
         notes: data.notes || "",
@@ -127,12 +152,7 @@ export const addItem = async ({
         product_id: data.product_id,
       },
     });
-    const stock = await prisma.stock.findFirst({
-      where: {
-        product_id: data.product_id,
-        warehouse_id: data.warehouse_id,
-      },
-    });
+
     if (stock) {
       await prisma.stock.update({
         where: {
@@ -143,10 +163,10 @@ export const addItem = async ({
         },
       });
     }
-    return item;
+    return;
   } catch (error) {
     console.error(error);
-    throw new Error(`Failed to fetch categories: ${error}`);
+    throw new Error(`Failed to fetch: ${error}`);
   }
 };
 

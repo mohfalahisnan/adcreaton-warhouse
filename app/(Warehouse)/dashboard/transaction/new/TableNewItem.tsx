@@ -20,6 +20,7 @@ import { useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/components/provider";
 import { useLocalStorage } from "@/hook/useLocalstorage";
 import { useSession } from "next-auth/react";
+import { toast } from "@/components/ui/use-toast";
 
 const TableNewItem = ({
   orderId,
@@ -49,6 +50,13 @@ const TableNewItem = ({
     onSuccess: () => {
       setOpen(false);
       queryClient.invalidateQueries({ queryKey: ["orderItem", orderId] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to add item",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 

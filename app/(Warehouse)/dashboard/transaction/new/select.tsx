@@ -58,7 +58,7 @@ export const CustomerSelect = ({
                 data.map((customer) => (
                   <CommandItem
                     key={customer.customer_id}
-                    value={customer.customer_id.toString()}
+                    value={customer.name}
                     onSelect={() => {
                       setValue((prev) =>
                         prev === customer ? undefined : customer,
@@ -118,7 +118,7 @@ export const ProductSelect = ({
                 data.map((product) => (
                   <CommandItem
                     key={product.product_id}
-                    value={product.product_id}
+                    value={product.name}
                     onSelect={() => {
                       setValue((prev) =>
                         prev === product.product_id
