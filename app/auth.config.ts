@@ -1,5 +1,11 @@
-import type { NextAuthConfig } from "next-auth";
+import type { NextAuthConfig, User } from "next-auth";
 import { prisma } from "@/lib/prisma";
+
+// Extend the User type to include 'role'
+interface ExtendedUser extends User {
+  role?: string;
+}
+
 export const authConfig = {
   trustHost: true,
   session: {
@@ -19,7 +25,7 @@ export const authConfig = {
     async session({ session, token }) {
       // Menambahkan role ke dalam sesi
       if (token) {
-        session.user.role = token.role as string;
+        (session.user as ExtendedUser).role = token.role as string;
       }
       return session;
     },
