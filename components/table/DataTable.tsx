@@ -72,8 +72,14 @@ export function DataTable<TData, TValue>({
     const name = row.getValue("name");
     const notes = row.getValue("notes");
     const desc = row.getValue("inputBy");
+    const status = row.getValue("status");
     const productName = row.original?.product?.name;
+    const customer = row.original?.customer_name?.name;
+    const sales = row.original?.sales_name?.name;
     return (
+      status?.toString().toLowerCase().includes(filterValue.toLowerCase()) ||
+      customer?.toString().toLowerCase().includes(filterValue.toLowerCase()) ||
+      sales?.toString().toLowerCase().includes(filterValue.toLowerCase()) ||
       name?.toString().toLowerCase().includes(filterValue.toLowerCase()) ||
       notes?.toString().toLowerCase().includes(filterValue.toLowerCase()) ||
       desc?.toString().toLowerCase().includes(filterValue.toLowerCase()) ||

@@ -6,6 +6,7 @@ import { ChangeEvent, FormEvent, useState } from "react";
 import bg from "./../public/Background.png";
 import { useQuery } from "@tanstack/react-query";
 import { getSetting } from "@/lib/actions/setting";
+import CreateUser from "@/components/CreateUser";
 type LoginInput = {
   username: string;
   password: string;
@@ -43,6 +44,7 @@ export default function LoginPage({ searchParams }: PageProps) {
   };
 
   if (session && session.data) {
+    console.log("session:", session);
     router.push("/dashboard");
   }
   return (
@@ -117,6 +119,7 @@ export default function LoginPage({ searchParams }: PageProps) {
             </form>
           </div>
           <div className="w-full">
+            <CreateUser />
             <Image
               src={"/image.png"}
               width={200}

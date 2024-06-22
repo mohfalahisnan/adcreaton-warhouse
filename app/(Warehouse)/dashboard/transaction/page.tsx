@@ -28,7 +28,9 @@ import { CheckCircle2, Plus } from "lucide-react";
 import React, { useState } from "react";
 import { deleteOrder, deleteOrders, getOrder } from "@/lib/actions/order";
 import Link from "next/link";
-interface TransactionTable
+import { useRouter } from "next/navigation";
+import Payment from "./Payment";
+export interface TransactionTable
   extends Prisma.OrderGetPayload<{
     include: {
       _count: true;
@@ -51,8 +53,9 @@ const Page = () => {
   });
   const [open, setOpen] = useState(false);
   const [openAdd, setOpenAdd] = useState(false);
+  const [openCancel, setOpenCancel] = useState(false);
   const [selected, setSelected] = useState<string>();
-
+  const route = useRouter();
   const deleteQuerys = useMutation({
     mutationFn: async (transaction: Order[]) => await deleteOrders(transaction),
     onSuccess: () => {
@@ -151,6 +154,30 @@ const Page = () => {
     {
       accessorKey: "status",
       title: "Status",
+      renderCell(cellValue, row) {
+        return (
+          <div className="flex flex-col">
+            {/* <ChangeStatus id={row.order_id} /> */}
+            {row.status == "ON_DELEVERY" ? (
+              <Button size={"xs"}>{row.status}</Button>
+            ) : (
+              <Button
+                size={"xs"}
+                className={`${row.status == "PENDING" && "bg-orange-500"}`}
+              >
+                {row.status}
+              </Button>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "order_id",
+      title: "Payment",
+      renderCell(cellValue, row) {
+        return <Payment data={row} />;
+      },
     },
     {
       accessorKey: "totalAmount",
@@ -163,12 +190,19 @@ const Page = () => {
     {
       label: "Copy Id",
       onClick: (transaction: TransactionTable) =>
-        navigator.clipboard.writeText(JSON.stringify(transaction.order_id)),
+        navigator.clipboard.writeText(transaction.order_id),
     },
     {
       label: "Delete",
       onClick: (transaction: TransactionTable) => {
         setOpen(true);
+        setSelected(transaction.order_id);
+      },
+    },
+    {
+      label: "Cancel",
+      onClick: (transaction: TransactionTable) => {
+        setOpenCancel(true);
         setSelected(transaction.order_id);
       },
     },
@@ -185,7 +219,8 @@ const Page = () => {
   };
 
   const handlePrint = (selectedRows: TransactionTable[]) => {
-    // Implement your edit logic here
+    const url = `/invoice/${selectedRows.map((row) => row.order_id).join("and")}`;
+    window.open(url, "_blank");
     console.log("Edited rows:", selectedRows);
   };
   if (!data) return null;
@@ -223,6 +258,37 @@ const Page = () => {
             <AlertDialogCancel
               onClick={() => {
                 setOpen(false);
+                setSelected(undefined);
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteQuery.mutate(selected || "")}
+              className="bg-destructive hover:bg-destructive"
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={openCancel}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Are you sure cancel this product?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete and
+              remove your data from our servers.
+              {/* {selected} */}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setOpenCancel(false);
                 setSelected(undefined);
               }}
             >

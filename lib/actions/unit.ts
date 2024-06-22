@@ -31,6 +31,21 @@ export const addUnit = async (id: string, satuan: Satuan) => {
   }
 };
 
+export const editUnit = async (id: number, satuan: Satuan) => {
+  try {
+    const unit = await prisma.satuan.update({
+      where: {
+        satuan_id: id,
+      },
+      data: satuan,
+    });
+    return unit;
+  } catch (error) {
+    console.log(error);
+    throw new Error("Error fetching unit");
+  }
+};
+
 export const deleteUnit = async (id: number) => {
   try {
     const unit = await prisma.satuan.delete({

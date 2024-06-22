@@ -101,7 +101,7 @@ const Page = () => {
   };
   const nameColumn: ColumnConfig<User> = {
     accessorKey: "name",
-    title: "name",
+    title: "Name",
   };
   const positionColumn: ColumnConfig<User> = {
     accessorKey: "position",
@@ -109,13 +109,12 @@ const Page = () => {
   };
 
   const columnsConfig: ColumnConfig<User>[] = [
+    nameColumn,
     emailColumn,
-
     {
       accessorKey: "phone",
       title: "Phone",
     },
-    nameColumn,
     positionColumn,
   ];
 
@@ -175,12 +174,14 @@ const Page = () => {
           </div>
         </ResponsiveDialog>
       </div>
-      <DataTable
-        columns={columns}
-        data={data}
-        onDelete={handleDelete}
-        onPrint={handlePrint}
-      />
+      {data && (
+        <DataTable
+          columns={columns}
+          data={data}
+          onDelete={handleDelete}
+          onPrint={handlePrint}
+        />
+      )}
       <AlertDialog open={open}>
         <AlertDialogContent>
           <AlertDialogHeader>

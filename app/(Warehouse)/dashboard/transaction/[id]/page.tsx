@@ -35,8 +35,10 @@ import { ResponsiveDialog } from "@/components/ResponsiveDialog";
 import { Plus } from "lucide-react";
 import CustomerForm from "@/components/CustomerForm";
 
-function Page() {
+function Page({ params }: { params: { id: string } }) {
   //state
+  const { id } = params;
+  console.log(id);
   const navigation = useRouter();
   const [warehouseId] = useLocalStorage("warehouse_id", "1");
   const [storedSales, setStoredSales] = useLocalStorage("sales_id", "");
@@ -109,7 +111,7 @@ function Page() {
         },
       });
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       navigation.push("/dashboard/transaction");
     },
     onError(error) {
@@ -158,21 +160,14 @@ function Page() {
 
   useEffect(() => {
     if (salesId) setStoredSales(salesId);
-    if (salesId) {
-      if (!orderId) {
-        queryOrder.mutate();
-      }
-    }
   }, [salesId]);
 
   useEffect(() => {
     if (storedSales !== "") {
       setSalesId(storedSales);
     }
-    if (salesId) {
-      if (!orderId) {
-        queryOrder.mutate();
-      }
+    if (!orderId) {
+      queryOrder.mutate();
     }
   }, []);
 

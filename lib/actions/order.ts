@@ -191,7 +191,7 @@ export const addItem = async ({
     await prisma.outbound.create({
       data: {
         quantity: data.quantity * dikali,
-        notes: `Outbound for order: ${order?.order_code} ${data.notes}`,
+        notes: `#TRANSACTION Outbound for: #ORDER-${order?.order_code} ${data.notes}`,
         inputBy: data.inputby || "",
         warehouse_id: data.warehouse_id || 1,
         product_id: data.product_id,
@@ -256,6 +256,65 @@ export const getOrderById = async (
   }
 };
 
+export const getOrdersByIds = async (
+  ids: string[]
+): Promise<
+  | Prisma.OrderGetPayload<{
+      include: {
+        OrderItem: {
+          include: { product: { include: { Satuan: true } }; satuan: true };
+        };
+        customer_name: true;
+        sales_name: true;
+      };
+    }>[]
+  | null
+> => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: {
+        order_id: {
+          in: ids,
+        },
+      },
+      include: {
+        OrderItem: {
+          include: {
+            product: {
+              include: {
+                Satuan: true,
+              },
+            },
+            satuan: true,
+          },
+        },
+        customer_name: true,
+        sales_name: true,
+      },
+    });
+    return orders;
+  } catch (error) {
+    console.log(error);
+    throw new Error("Failed to fetch orders");
+  }
+};
+
+export const updateOrderStatus = async (id: string, status: string) => {
+  try {
+    return await prisma.order.update({
+      where: {
+        order_id: id,
+      },
+      data: {
+        status: status as StatusOrder,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    throw new Error("Failed to fetch");
+  }
+};
+
 export const getOrder = async (warehouse_id: number, depth?: boolean) => {
   try {
     const order = await prisma.order.findMany({
@@ -267,6 +326,9 @@ export const getOrder = async (warehouse_id: number, depth?: boolean) => {
         OrderItem: depth ? { include: { product: true, satuan: true } } : true,
         sales_name: true,
         customer_name: true,
+      },
+      orderBy: {
+        createdAt: "desc",
       },
     });
     return order;

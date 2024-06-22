@@ -45,14 +45,15 @@ model Customer {
 }
 
 model Transaction {
-  transaction_id   String   @id @default(uuid())
+  transaction_id   String      @id @default(uuid())
   transaction_code String
   user_id          String
-  sales_name       User     @relation(references: [user_id], fields: [user_id])
+  sales_name       User        @relation(references: [user_id], fields: [user_id])
   Cart             Cart[]
   total            String
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  status           StatusOrder
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 }
 
 model Cart {
@@ -88,6 +89,7 @@ model Order {
   status    StatusOrder @default(PENDING)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
+  Payment   Payment[]
 }
 
 model OrderItem {
@@ -235,6 +237,17 @@ model Stock {
 
   product_id String
   product    Product @relation(fields: [product_id], references: [product_id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Payment {
+  payment_id String   @id @default(uuid())
+  amount     Float
+  checked    Boolean  @default(false)
+  orderId    String   @unique
+  order      Order    @relation(fields: [orderId], references: [order_id])
+  inputBy    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Satuan {

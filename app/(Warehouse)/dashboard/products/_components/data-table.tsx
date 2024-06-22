@@ -121,7 +121,7 @@ export function DataTable({ data }: { data: ProductWithStock[] }) {
           <div
             className="flex gap-1 cursor-pointer"
             onClick={() => {
-              router.push(`/dashboard/product/${product.product_id}`);
+              router.push(`/dashboard/products/${product.product_id}`);
             }}
           >
             <div className="rounded overflow-hidden">

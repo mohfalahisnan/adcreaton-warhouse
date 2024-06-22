@@ -21,6 +21,13 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { addEmployee } from "@/lib/actions/accounts";
 import { useLocalStorage } from "@/hook/useLocalstorage";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 const EmployeeForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const session = useSession();
@@ -72,12 +79,14 @@ const EmployeeForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     position: z.string().optional(),
     inputby: z.string(),
     warehouse_id: z.number().optional(),
+    role: z.string().optional(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       inputby: session.data?.user?.name as string,
+      role: "EMPLOYEE",
     },
   });
 
@@ -188,23 +197,61 @@ const EmployeeForm = ({ onSuccess }: { onSuccess?: () => void }) => {
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="creditcard"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>No. Rek</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="text"
-                        placeholder="Nomor Rekening"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="flex gap-4">
+                <FormField
+                  control={form.control}
+                  name="creditcard"
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormLabel>No. Rek</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="text"
+                          placeholder="Nomor Rekening"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormLabel>Role</FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={(value) =>
+                            form.setValue("role", value)
+                          }
+                        >
+                          <SelectTrigger className="capitalize">
+                            <SelectValue
+                              className="capitalize"
+                              defaultValue="EMPLOYEE"
+                              placeholder="select category..."
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["EMPLOYEE", "SALES"].map((item, i) => (
+                              <SelectItem
+                                value={item}
+                                className="capitalize"
+                                key={i + item}
+                              >
+                                {item}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <div className="w-full flex justify-end">
                 <Button type="submit" className="flex gap-2">

@@ -13,6 +13,7 @@ import { MoreHorizontal } from "lucide-react";
 import { ColumnHeader } from "../ColumnHeader";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatRupiah } from "@/lib/formatRupiah";
+import { formatDate } from "@/lib/formatDate";
 
 type DeepKeys<T> = T extends object
   ? {
@@ -105,7 +106,7 @@ export const createColumns = <T extends Record<string, any>>({
 
       if (column.type === "date") {
         const date = new Date(cellValue);
-        return date.toLocaleDateString(); // Adjust the format here if needed
+        return formatDate(date); // Adjust the format here if needed
       } else if (column.type === "currency") {
         if (cellValue > 0) {
           return `Rp ${formatRupiah(cellValue)}`;

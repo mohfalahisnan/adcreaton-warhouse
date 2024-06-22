@@ -85,7 +85,13 @@ export const getAllEmployee = async (warehouse_id: number): Promise<User[]> => {
         warehouse_id: warehouse_id,
       },
     });
-    return users;
+    const user = await prisma.user.findMany({
+      where: {
+        role: "SALES",
+        warehouse_id: warehouse_id,
+      },
+    });
+    return [...user, ...users];
   } catch (error) {
     throw new Error();
   }

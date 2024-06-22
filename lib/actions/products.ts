@@ -37,6 +37,24 @@ export const addProduct = async (product: Product, inputBy: string) => {
   }
 };
 
+export const editProduct = async (product: Product, inputBy: string) => {
+  try {
+    const products = await prisma.product.update({
+      where: {
+        product_id: product.product_id,
+      },
+      data: {
+        ...product,
+        inputby: inputBy,
+      },
+    });
+    return products;
+  } catch (error) {
+    console.log(error);
+    throw new Error("Failed to fetch");
+  }
+};
+
 export const getProductById = async (id: string) => {
   try {
     const product = await prisma.product.findUnique({

@@ -9,34 +9,31 @@ import {
 import { Category } from "@prisma/client";
 import { UseFormReturn } from "react-hook-form";
 
-
 type Props = {
   data: Category[];
   form: UseFormReturn<any>;
+  defaultValue?: number;
 };
 
-const SelectCategory = ({ data, form }: Props) => {
+const SelectCategory: React.FC<Props> = ({ data, form, defaultValue }) => {
   return (
     <Select
       onValueChange={(value) => form.setValue("category_id", parseInt(value))}
+      defaultValue={defaultValue?.toString()}
     >
       <SelectTrigger className="capitalize">
         <SelectValue className="capitalize" placeholder="select category..." />
       </SelectTrigger>
       <SelectContent>
-        
-       {data.map((item, i) => {
-            return (
-              <SelectItem
-                value={item.category_id.toString()}
-                className="capitalize"
-                key={i + item.category_id}
-              >
-                {item.name}
-              </SelectItem>
-            );
-        })}
-      
+        {data.map((item, i) => (
+          <SelectItem
+            value={item.category_id.toString()}
+            className="capitalize"
+            key={i + item.category_id}
+          >
+            {item.name}
+          </SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );

@@ -211,7 +211,7 @@ export const SalesSelect = ({
                 data.map((sales) => (
                   <CommandItem
                     key={sales.user_id}
-                    value={sales.user_id}
+                    value={sales.name}
                     onSelect={(currentValue) => {
                       setValue(currentValue === value ? "" : currentValue);
                       setOpen(false);

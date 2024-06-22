@@ -1,10 +1,10 @@
 "use client";
 import React, { useState } from "react";
 import { Button } from "./ui/button";
-import { CheckCircle2, CogIcon, Pencil, Save, Trash } from "lucide-react";
+import { CheckCircle2, CogIcon, Pencil, Save, Trash, X } from "lucide-react";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { addUnit, deleteUnit, getUnit } from "@/lib/actions/unit";
+import { addUnit, deleteUnit, editUnit, getUnit } from "@/lib/actions/unit";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "./ui/table";
 import { ResponsiveDialog } from "./ResponsiveDialog";
 import { z } from "zod";
@@ -27,6 +27,8 @@ import { queryClient } from "./provider";
 function UnitForm({ id }: { id: string }) {
   const [open, setOpen] = useState(false);
   const [add, setAdd] = useState(false);
+  const [edit, setEdit] = useState(false);
+  const [selected, setSelected] = useState<Satuan | null>(null);
   const { data } = useQuery({
     queryKey: ["unit", id],
     queryFn: () => getUnit(id),
@@ -38,6 +40,38 @@ function UnitForm({ id }: { id: string }) {
       queryClient.invalidateQueries({ queryKey: ["unit", id] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       setAdd(false);
+      setOpen(false);
+      toast({
+        description: (
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <span className="text-green-500">
+                <CheckCircle2 size={28} strokeWidth={1} />
+              </span>
+            </div>
+            <div>
+              <h3 className="text-lg">Success !</h3>
+            </div>
+          </div>
+        ),
+      });
+    },
+    onError(error) {
+      toast({
+        title: `Error: ${error.message}`,
+        description: `${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const editMutation = useMutation({
+    mutationFn: async (item: Satuan) => await editUnit(item.satuan_id, item),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["unit", id] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      setAdd(false);
+      setEdit(false);
       setOpen(false);
       toast({
         description: (
@@ -80,8 +114,15 @@ function UnitForm({ id }: { id: string }) {
 
   // Form Function
   const formSchema = z.object({
+    satuan_id: z.number().optional(),
     name: z.string(),
     multiplier: z.number(),
+  });
+
+  const formSchemaEdit = z.object({
+    satuan_id: z.number().optional(),
+    name: z.string().optional(),
+    multiplier: z.number().optional(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -89,8 +130,21 @@ function UnitForm({ id }: { id: string }) {
     defaultValues: {},
   });
 
+  const editForm = useForm<z.infer<typeof formSchemaEdit>>({
+    resolver: zodResolver(formSchemaEdit),
+    defaultValues: {
+      satuan_id: selected?.satuan_id,
+      name: selected?.name,
+      multiplier: selected?.multiplier,
+    },
+  });
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     addMutation.mutate(values as Satuan);
+  }
+  async function onSubmitEdit(values: z.infer<typeof formSchemaEdit>) {
+    values.satuan_id = selected?.satuan_id;
+    editMutation.mutate(values as Satuan);
   }
 
   return (
@@ -108,11 +162,13 @@ function UnitForm({ id }: { id: string }) {
       >
         <div>
           <div className="my-2">
-            <Button size={"sm"} onClick={() => setAdd(!add)}>
-              {add ? "Cancel" : "Add Unit"}
-            </Button>
+            {!edit && (
+              <Button size={"sm"} onClick={() => setAdd(!add)}>
+                {add ? "Cancel" : "Add Unit"}
+              </Button>
+            )}
           </div>
-          <Condition show={add}>
+          <Condition show={add && !edit}>
             <div>
               <Form {...form}>
                 <form
@@ -156,6 +212,18 @@ function UnitForm({ id }: { id: string }) {
                     />
                   </div>
                   <div className="w-full flex justify-end">
+                    <Button
+                      type="reset"
+                      className="flex gap-2 mr-4"
+                      variant={"outline"}
+                      onClick={() => {
+                        setAdd(false);
+                        setSelected(null);
+                      }}
+                    >
+                      <X size={16} />
+                      Cancel
+                    </Button>
                     <Button type="submit" className="flex gap-2">
                       <Save size={16} />
                       Save
@@ -165,7 +233,78 @@ function UnitForm({ id }: { id: string }) {
               </Form>
             </div>
           </Condition>
-          <Condition show={!add}>
+          <Condition show={edit && !add}>
+            <div>
+              <Form {...editForm}>
+                <form
+                  onSubmit={editForm.handleSubmit(onSubmitEdit)}
+                  className="space-y-4"
+                >
+                  <div className="flex gap-4">
+                    <FormField
+                      control={editForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem className="w-full">
+                          <FormLabel>Name</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="text"
+                              defaultValue={selected?.name}
+                              placeholder="Name"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={editForm.control}
+                      name="multiplier"
+                      render={({ field }) => (
+                        <FormItem className="w-full">
+                          <FormLabel>Quantity</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              defaultValue={selected?.multiplier}
+                              placeholder="Multiplier..."
+                              {...field}
+                              // value={field.value ? Number(field.value) : ""}
+                              onChange={(e) =>
+                                field.onChange(Number(e.target.value))
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="w-full flex justify-end">
+                    <Button
+                      type="reset"
+                      className="flex gap-2 mr-4"
+                      variant={"outline"}
+                      onClick={() => {
+                        setEdit(false);
+                        setSelected(null);
+                      }}
+                    >
+                      <X size={16} />
+                      Cancel
+                    </Button>
+                    <Button type="submit" className="flex gap-2">
+                      <Save size={16} />
+                      Save
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </div>
+          </Condition>
+          <Condition show={!add && !edit}>
             <Table>
               <TableHeader className="bg-accent">
                 <TableRow>
@@ -183,7 +322,8 @@ function UnitForm({ id }: { id: string }) {
                       <Button
                         size="xs"
                         onClick={() => {
-                          /* Add logic here */
+                          setSelected(item);
+                          setEdit(true);
                         }}
                       >
                         <Pencil size={12} />

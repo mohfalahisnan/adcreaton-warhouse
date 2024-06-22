@@ -61,65 +61,6 @@ const Page = () => {
   const [open, setOpen] = useState(false);
   const [openAdd, setOpenAdd] = useState(false);
   const [selected, setSelected] = useState<string>();
-  //   const deleteQuery = useMutation({
-  //     mutationFn: async (id: number) => await deleteCustomer(id),
-  //     onSuccess: () => {
-  //       queryClient.invalidateQueries({ queryKey: ["customer"] });
-
-  //       setOpen(false);
-  //       toast({
-  //         description: (
-  //           <div className="flex items-center justify-between gap-2">
-  //             <div>
-  //               <span className="text-green-500">
-  //                 <CheckCircle2 size={28} strokeWidth={1} />
-  //               </span>
-  //             </div>
-  //             <div>
-  //               <h3 className="text-lg">Customer Deleted!</h3>
-  //             </div>
-  //           </div>
-  //         ),
-  //       });
-  //     },
-  //     onError(error) {
-  //       toast({
-  //         title: `Error: ${error.message}`,
-  //         description: `${error.message}`,
-  //         variant: "destructive",
-  //       });
-  //     },
-  //   });
-  //   const deleteQuerys = useMutation({
-  //     mutationFn: async (customers: Product[]) =>
-  //       await deleteCustomers(customers),
-  //     onSuccess: () => {
-  //       queryClient.invalidateQueries({ queryKey: ["products"] });
-
-  //       setOpen(false);
-  //       toast({
-  //         description: (
-  //           <div className="flex items-center justify-between gap-2">
-  //             <div>
-  //               <span className="text-green-500">
-  //                 <CheckCircle2 size={28} strokeWidth={1} />
-  //               </span>
-  //             </div>
-  //             <div>
-  //               <h3 className="text-lg">Customer Deleted!</h3>
-  //             </div>
-  //           </div>
-  //         ),
-  //       });
-  //     },
-  //     onError(error) {
-  //       toast({
-  //         title: `Error: ${error.message}`,
-  //         description: `${error.message}`,
-  //         variant: "destructive",
-  //       });
-  //     },
-  //   });
   const columnsConfig: ColumnConfig<ProductWithStock>[] = [
     {
       accessorKey: "name",
