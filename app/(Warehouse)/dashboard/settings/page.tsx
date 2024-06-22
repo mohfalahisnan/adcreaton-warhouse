@@ -1,21 +1,7 @@
 "use client";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Cog } from "lucide-react";
+
 import React, { useState } from "react";
-import TableCategory from "../category/TableCategory";
 import { useGetCategory } from "@/hook/useCategory";
-import UserSetting from "@/components/UserSetting";
-import LogoSetting from "@/components/LogoSetting";
-import WebTitleForm from "@/components/WebTitleForm";
-import WebDescForm from "@/components/WebDescForm";
 
 type Props = {};
 
@@ -26,7 +12,14 @@ const Page = (props: Props) => {
   if (!category.data) return null;
   return (
     <>
-      <h2 className="font-bold text-xl">Apps and Integration</h2>
+      <div className="flex w-full h-screen items-center justify-center">
+        <div className="w-full h-full bg-white rounded-lg">
+          <div className="flex items-center justify-center">
+            <h1 className="text-2xl font-bold">You dont have access</h1>
+          </div>
+        </div>
+      </div>
+      {/* <h2 className="font-bold text-xl">Apps and Integration</h2>
       <h3>Improve your management and products.</h3>
       <div className="flex gap-2 mt-4">
         <Dialog>
@@ -112,7 +105,7 @@ const Page = (props: Props) => {
             </DialogHeader>
           </DialogContent>
         </Dialog>
-      </div>
+      </div> */}
     </>
   );
 };

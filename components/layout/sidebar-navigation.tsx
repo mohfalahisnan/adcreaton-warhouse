@@ -1,14 +1,12 @@
 import {
   BarChart,
   Box,
-  Car,
   DollarSign,
   FileBarChart,
   FileMinus2,
   FilePlus2,
   HomeIcon,
   Settings,
-  Truck,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -59,16 +57,16 @@ const menu: Menu[] = [
     url: "/dashboard/transaction",
     icon: <DollarSign />,
   },
-  {
-    title: "Cars",
-    url: "/dashboard/cars",
-    icon: <Car />,
-  },
-  {
-    title: "Shipping",
-    url: "/dashboard/shipping",
-    icon: <Truck />,
-  },
+  // {
+  //   title: "Cars",
+  //   url: "/dashboard/cars",
+  //   icon: <Car />,
+  // },
+  // {
+  //   title: "Shipping",
+  //   url: "/dashboard/shipping",
+  //   icon: <Truck />,
+  // },
   {
     title: "Customer",
     url: "/dashboard/customer",

@@ -25,6 +25,7 @@ import { convertTotalStockToUnits } from "@/lib/stockInUnit";
 import { useQuery } from "@tanstack/react-query";
 import { getInbound } from "@/lib/actions/inbound";
 import InboundForm from "@/components/InboundForm";
+import { Button } from "@/components/ui/button";
 
 const StockCell = ({ total, Satuan }: { total: number; Satuan: Satuan[] }) => {
   const [stockInUnits, setStockInUnits] = useState<{ [key: string]: number }>(
@@ -144,6 +145,24 @@ const Page = () => {
       accessorKey: "createdAt",
       title: "Created At",
       type: "date",
+    },
+    {
+      accessorKey: "confirm",
+      title: "Approve",
+      renderCell(cellValue, row) {
+        return (
+          <div>
+            Confirm : {row.confirm ? "Approved" : "Not Approved"}
+            <br />
+            <Button size={"xs"} className="mr-2">
+              Approve
+            </Button>
+            <Button size={"xs"} variant={"outline"}>
+              Reject
+            </Button>
+          </div>
+        );
+      },
     },
     {
       accessorKey: "inputBy",
