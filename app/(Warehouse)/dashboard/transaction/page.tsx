@@ -224,6 +224,7 @@ const Page = () => {
     console.log("Edited rows:", selectedRows);
   };
   if (!data) return null;
+  console.log("data:", data);
   return (
     <div>
       <div className="mb-4">
