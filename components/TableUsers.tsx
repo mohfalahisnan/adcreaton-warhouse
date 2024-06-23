@@ -26,18 +26,19 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import { deleteUser, getAllAdmin } from "@/lib/actions/accounts";
+import { Role } from "@prisma/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { CheckCircle2, MoreVertical, TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
-const TableUsers = () => {
+const TableUsers = ({ role = "ADMIN" }: { role?: Role }) => {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string>();
   const { data } = useQuery({
     queryKey: ["users"],
-    queryFn: async () => await getAllAdmin(),
+    queryFn: async () => await getAllAdmin(role),
   });
   const { toast } = useToast();
   const router = useRouter();

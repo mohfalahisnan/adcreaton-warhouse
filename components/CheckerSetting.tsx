@@ -1,13 +1,13 @@
 "use client";
 import React, { useState } from "react";
-import UserForm from "./UserForm";
 import TableUsers from "./TableUsers";
 import { Button } from "./ui/button";
 import Condition from "./Condition";
+import CheckerForm from "./CheckerForm";
 
 type Props = {};
 
-const UserSetting = (props: Props) => {
+const CheckerSetting = (props: Props) => {
   const [state, setState] = useState<"table" | "add">("table");
   return (
     <div>
@@ -18,15 +18,11 @@ const UserSetting = (props: Props) => {
         <Button onClick={() => setState("table")}>Users List</Button>
       </Condition>
       <div className="mt-4 max-h-200 overflow-auto">
-        <Condition show={state === "add"}>
-          <UserForm onSuccess={() => setState("table")} />
-        </Condition>
-        <Condition show={state === "table"}>
-          <TableUsers role="ADMIN" />
-        </Condition>
+        {state === "add" && <CheckerForm onSuccess={() => setState("table")} />}
+        {state === "table" && <TableUsers role="CHECKER" />}
       </div>
     </div>
   );
 };
 
-export default UserSetting;
+export default CheckerSetting;

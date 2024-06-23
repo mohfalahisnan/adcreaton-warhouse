@@ -15,6 +15,10 @@ export const getProducts = async () => {
         Satuan: true,
         _count: true,
       },
+      take: 500,
+      orderBy: {
+        createdAt: "desc",
+      },
     });
     return products;
   } catch (error) {

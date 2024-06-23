@@ -1,5 +1,6 @@
 "use server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/app/auth";
 import { Outbound } from "@prisma/client";
 
 export const getOutbound = async (id: number) => {
@@ -14,11 +15,29 @@ export const getOutbound = async (id: number) => {
       orderBy: {
         createdAt: "desc",
       },
+      take: 500,
     });
     return outbound;
   } catch (error) {
     console.log(error);
     throw new Error("Error fetching");
+  }
+};
+
+export const confirmOutbound = async (id: string) => {
+  const session = await auth();
+  try {
+    return await prisma.outbound.update({
+      where: {
+        outbound_id: id,
+      },
+      data: {
+        confirm: true,
+        confirmBy: session?.user?.name || "",
+      },
+    });
+  } catch (error) {
+    throw new Error("Error confirming outbound");
   }
 };
 
@@ -31,7 +50,7 @@ export const addOutbound = async (
         quantity: data.quantity,
         notes: `${data.notes},
         product: ${data.product_name}`,
-        confirm: data.confirm || true,
+        confirm: data.confirm || false,
         inputBy: data.inputBy,
         product: {
           connect: {

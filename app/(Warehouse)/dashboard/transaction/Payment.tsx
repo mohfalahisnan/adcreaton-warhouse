@@ -11,6 +11,15 @@ import Condition from "@/components/Condition";
 import { queryClient } from "@/components/provider";
 import { useSession } from "next-auth/react";
 import { updateOrderStatus } from "@/lib/actions/order";
+import { PaymentMethod } from "@prisma/client";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Payment = ({ data }: { data: TransactionTable }) => {
   const [open, setOpen] = useState(false);
@@ -57,7 +66,9 @@ const Bayar = ({
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   const session = useSession();
-  const [amount, setAmount] = useState<number>();
+  const [amount, setAmount] = useState<number>(data.totalAmount || 0);
+  const [method, setMethod] = useState<PaymentMethod>("CASH");
+  const [note, setNote] = useState<string>();
   const createPaymentMutation = useMutation({
     mutationFn: async () => {
       const create = await createPayment({
@@ -68,6 +79,8 @@ const Bayar = ({
         },
         amount: amount || 0,
         inputBy: session?.data?.user?.name || "",
+        method: method || "CASH",
+        notes: note || "",
       });
       if (create) {
         return await updateOrderStatus(data.order_id, "ON_DELEVERY");
@@ -96,11 +109,31 @@ const Bayar = ({
         </div>
         <div>
           <Input
-            className="my-4"
+            className="mt-4"
             type="number"
             placeholder={`${formatRupiah(data.totalAmount || 0)}`}
             value={amount || ""}
             onChange={(e) => setAmount(Number(e.target.value))}
+          />
+          <div className="my-2">
+            <Select
+              value={method}
+              onValueChange={(e) => setMethod(e as PaymentMethod)}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Method" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="CASH">Cash</SelectItem>
+                <SelectItem value="TRANSFER">Transfer</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Textarea
+            placeholder="Catatan"
+            value={note}
+            className="mb-4"
+            onChange={(e) => setNote(e.target.value)}
           />
           {amount && (data.totalAmount || 0) - amount !== 0 && (
             <h4

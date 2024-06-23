@@ -3,6 +3,22 @@ import { auth } from "@/app/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
+export const getPayment = async (warehouse: number) => {
+  try {
+    return await prisma.payment.findMany({
+      where: {
+        warehouseId: warehouse,
+      },
+      take: 500,
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  } catch (error) {
+    throw new Error("Failed to fetch");
+  }
+};
+
 export const getPaymentById = async (id: string) => {
   try {
     return await prisma.payment.findUnique({

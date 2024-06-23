@@ -2,6 +2,22 @@
 
 import React, { useState } from "react";
 import { useGetCategory } from "@/hook/useCategory";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Cog } from "lucide-react";
+import LogoSetting from "@/components/LogoSetting";
+import WebTitleForm from "@/components/WebTitleForm";
+import WebDescForm from "@/components/WebDescForm";
+import TableCategory from "../category/TableCategory";
+import UserSetting from "@/components/UserSetting";
+import CheckerSetting from "@/components/CheckerSetting";
 
 type Props = {};
 
@@ -12,14 +28,7 @@ const Page = (props: Props) => {
   if (!category.data) return null;
   return (
     <>
-      <div className="flex w-full h-screen items-center justify-center">
-        <div className="w-full h-full bg-white rounded-lg">
-          <div className="flex items-center justify-center">
-            <h1 className="text-2xl font-bold">You dont have access</h1>
-          </div>
-        </div>
-      </div>
-      {/* <h2 className="font-bold text-xl">Apps and Integration</h2>
+      <h2 className="font-bold text-xl">Apps and Integration</h2>
       <h3>Improve your management and products.</h3>
       <div className="flex gap-2 mt-4">
         <Dialog>
@@ -94,7 +103,7 @@ const Page = (props: Props) => {
           <DialogTrigger asChild>
             <Button>
               <Cog size={18} className="mr-2" />
-              Users
+              Admin
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
@@ -105,7 +114,23 @@ const Page = (props: Props) => {
             </DialogHeader>
           </DialogContent>
         </Dialog>
-      </div> */}
+
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>
+              <Cog size={18} className="mr-2" />
+              Checker
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogDescription className="text-foreground">
+                <CheckerSetting />
+              </DialogDescription>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
+      </div>
     </>
   );
 };

@@ -1,15 +1,34 @@
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import React from "react";
 
-type Props = {};
+const TABS = [
+  "pembayaran",
+  "pemesanan",
+  "pengeluaran",
+  "barangmasuk",
+  "barangkeluar",
+  "retur",
+  "transfer",
+  "other",
+];
 
-const Page = (props: Props) => {
+const Page = () => {
   return (
-    <div className="flex w-full h-screen items-center justify-center">
-      <div className="w-full h-full bg-white rounded-lg">
-        <div className="flex items-center justify-center">
-          <h1 className="text-2xl font-bold">You dont have access</h1>
-        </div>
-      </div>
+    <div>
+      <Tabs defaultValue="pembayaran">
+        <TabsList>
+          {TABS.map((item, i) => (
+            <TabsTrigger value={item} key={i} className="capitalize">
+              {item}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <TabsContent value="pembayaran">
+          <div>
+            <h1>Pembayaran</h1>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

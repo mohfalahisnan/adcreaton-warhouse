@@ -1,6 +1,6 @@
 "use server";
 import { prisma } from "@/lib/prisma";
-import { Prisma, User } from "@prisma/client";
+import { Prisma, Role, User } from "@prisma/client";
 import bcrypt from "bcrypt";
 
 const hashPassword = async (password: string) => {
@@ -154,12 +154,28 @@ export const addUser = async (data: Prisma.UserCreateInput) => {
     throw new Error();
   }
 };
+export const addChecker = async (data: Prisma.UserCreateInput) => {
+  if (!data.password) return null;
+  const hashedPassword = await hashPassword(data.password);
+  try {
+    const user = await prisma.user.create({
+      data: {
+        ...data,
+        password: hashedPassword,
+        role: "CHECKER",
+      },
+    });
+    return user;
+  } catch (error) {
+    throw new Error();
+  }
+};
 
-export const getAllAdmin = async () => {
+export const getAllAdmin = async (role: Role) => {
   try {
     return await prisma.user.findMany({
       where: {
-        role: "ADMIN",
+        role: role,
       },
     });
   } catch (error) {

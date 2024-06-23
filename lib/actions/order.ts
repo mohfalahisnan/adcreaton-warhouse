@@ -330,6 +330,7 @@ export const getOrder = async (warehouse_id: number, depth?: boolean) => {
       orderBy: {
         createdAt: "desc",
       },
+      take: 500,
     });
     return order;
   } catch (error) {
