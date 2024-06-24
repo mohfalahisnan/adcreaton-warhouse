@@ -33,6 +33,7 @@ import Image from "next/image";
 const ProductForm = () => {
   const session = useSession();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -98,9 +99,11 @@ const ProductForm = () => {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true);
     console.log("exec");
     if (!file) {
       alert("Please select a file first!");
+      setIsLoading(false);
       return;
     }
 
@@ -119,14 +122,17 @@ const ProductForm = () => {
       } else {
         alert(`Failed to upload file: ${result.message}`);
       }
+      setIsLoading(false);
     } catch (error) {
       console.error("Error uploading file:", error);
       alert("Error uploading file");
+      setIsLoading(false);
     }
 
     values.inputby = session.data?.user?.name as string;
     values.tier_price = JSON.stringify(tierPrice);
     productMutation.mutate(values as Product);
+    setIsLoading(false);
   }
 
   const addTierPrice = () => {
@@ -427,7 +433,11 @@ const ProductForm = () => {
               />
 
               <div className="w-full flex justify-end">
-                <Button type="submit" className="flex gap-2">
+                <Button
+                  type="submit"
+                  className="flex gap-2"
+                  disabled={isLoading}
+                >
                   <Save size={16} />
                   Save
                 </Button>
