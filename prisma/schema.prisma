@@ -120,7 +120,7 @@ model Inbound {
   quantity   Float
   notes      String
   warehouse  Warehouse @relation(fields: [warehouse_id], references: [warehouse_id])
-  confirm    Boolean   @default(false)
+  confirm    Boolean?  @default(false)
   confirmBy  String?
 
   createdAt    DateTime @default(now())

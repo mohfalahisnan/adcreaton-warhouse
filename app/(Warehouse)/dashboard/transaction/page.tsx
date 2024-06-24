@@ -28,8 +28,9 @@ import { CheckCircle2, Plus } from "lucide-react";
 import React, { useState } from "react";
 import { deleteOrder, deleteOrders, getOrder } from "@/lib/actions/order";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import Payment from "./Payment";
+import { inboundCancelOrder } from "@/lib/actions/inbound";
+import { useSession } from "next-auth/react";
 export interface TransactionTable
   extends Prisma.OrderGetPayload<{
     include: {
@@ -47,15 +48,14 @@ export interface TransactionTable
 
 const Page = () => {
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
+  const session = useSession();
   const { data } = useQuery({
     queryKey: ["orders"],
     queryFn: async () => await getOrder(parseInt(warehouseId), true),
   });
   const [open, setOpen] = useState(false);
-  const [openAdd, setOpenAdd] = useState(false);
   const [openCancel, setOpenCancel] = useState(false);
   const [selected, setSelected] = useState<string>();
-  const route = useRouter();
   const deleteQuerys = useMutation({
     mutationFn: async (transaction: Order[]) => await deleteOrders(transaction),
     onSuccess: () => {
@@ -101,6 +101,36 @@ const Page = () => {
             </div>
             <div>
               <h3 className="text-lg">Order Deleted!</h3>
+            </div>
+          </div>
+        ),
+      });
+    },
+    onError(error) {
+      toast({
+        title: `Error: ${error.message}`,
+        description: `${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+  const cancelQuery = useMutation({
+    mutationFn: async (data: string) =>
+      await inboundCancelOrder({ order_id: data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+
+      setOpenCancel(false);
+      toast({
+        description: (
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <span className="text-green-500">
+                <CheckCircle2 size={28} strokeWidth={1} />
+              </span>
+            </div>
+            <div>
+              <h3 className="text-lg">Order Canceled!</h3>
             </div>
           </div>
         ),
@@ -245,6 +275,7 @@ const Page = () => {
         onDelete={handleDelete}
         onPrint={handlePrint}
       />
+
       <AlertDialog open={open}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -277,13 +308,9 @@ const Page = () => {
       <AlertDialog open={openCancel}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Are you sure cancel this product?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Cancel this product?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete and
-              remove your data from our servers.
-              {/* {selected} */}
+              Product akan dikembalikan ke stock
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -296,7 +323,7 @@ const Page = () => {
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deleteQuery.mutate(selected || "")}
+              onClick={() => cancelQuery.mutate(selected || "")}
               className="bg-destructive hover:bg-destructive"
             >
               Continue

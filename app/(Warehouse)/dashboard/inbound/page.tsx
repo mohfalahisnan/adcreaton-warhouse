@@ -22,10 +22,17 @@ import {
 import React, { useEffect, useState } from "react";
 import { Inbound, Product, Satuan } from "@prisma/client";
 import { convertTotalStockToUnits } from "@/lib/stockInUnit";
-import { useQuery } from "@tanstack/react-query";
-import { getInbound } from "@/lib/actions/inbound";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  approveInbound,
+  getInbound,
+  rejectInbound,
+} from "@/lib/actions/inbound";
 import InboundForm from "@/components/InboundForm";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/use-toast";
+import { queryClient } from "@/components/provider";
+import Condition from "@/components/Condition";
 
 const StockCell = ({ total, Satuan }: { total: number; Satuan: Satuan[] }) => {
   const [stockInUnits, setStockInUnits] = useState<{ [key: string]: number }>(
@@ -65,6 +72,32 @@ const Page = () => {
   const { data } = useQuery({
     queryKey: ["inbound"],
     queryFn: async () => await getInbound(Number(warehouseId)),
+  });
+  const reject = useMutation({
+    mutationFn: async (id: string) => await rejectInbound(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inbound"] });
+    },
+    onError(error) {
+      toast({
+        title: `Error: ${error.message}`,
+        description: `${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+  const approve = useMutation({
+    mutationFn: async (id: string) => await approveInbound(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inbound"] });
+    },
+    onError(error) {
+      toast({
+        title: `Error: ${error.message}`,
+        description: `${error.message}`,
+        variant: "destructive",
+      });
+    },
   });
   const [open, setOpen] = useState(false);
   const [openAdd, setOpenAdd] = useState(false);
@@ -152,14 +185,32 @@ const Page = () => {
       renderCell(cellValue, row) {
         return (
           <div>
-            Confirm : {row.confirm ? "Approved" : "Not Approved"}
+            {row.confirmBy === null
+              ? "no status"
+              : row.confirm
+                ? "Approved"
+                : "Rejected"}
             <br />
-            <Button size={"xs"} className="mr-2">
-              Approve
-            </Button>
-            <Button size={"xs"} variant={"outline"}>
-              Reject
-            </Button>
+            {row.confirmBy && `Confirm by : ${row.confirmBy}`}
+            <br />
+            <Condition show={row.confirmBy === null}>
+              <div className="flex">
+                <Button
+                  size={"xs"}
+                  className="mr-2"
+                  onClick={() => approve.mutate(row.inbound_id)}
+                >
+                  Approve
+                </Button>
+                <Button
+                  size={"xs"}
+                  variant={"outline"}
+                  onClick={() => reject.mutate(row.inbound_id)}
+                >
+                  Reject
+                </Button>
+              </div>
+            </Condition>
           </div>
         );
       },

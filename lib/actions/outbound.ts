@@ -93,3 +93,88 @@ export const addOutbound = async (
     throw new Error("Error adding outbound");
   }
 };
+
+export const rejectOutbound = async (id: string) => {
+  const session = await auth();
+  try {
+    const current = await prisma.outbound.findUnique({
+      where: {
+        outbound_id: id,
+      },
+      include: {
+        product: {
+          include: {
+            stock: true,
+          },
+        },
+      },
+    });
+
+    const outbound = await prisma.outbound.update({
+      where: {
+        outbound_id: id,
+      },
+      data: {
+        confirm: false,
+        confirmBy: session?.user.name,
+      },
+    });
+    if (!current) {
+      throw new Error("Cannot Find outbound data");
+    }
+
+    const stock = await prisma.stock.findFirst({
+      where: {
+        product_id: current.product_id || "",
+        warehouse_id: outbound.warehouse_id,
+      },
+    });
+
+    if (!stock) {
+      throw new Error("cannot find stock");
+    }
+
+    const update = await prisma.stock.update({
+      where: {
+        stock_id: stock.stock_id,
+      },
+      data: {
+        total: stock.total + outbound.quantity,
+      },
+    });
+
+    const inbound = await prisma.inbound.create({
+      data: {
+        inputBy: session?.user.name || "",
+        warehouse_id: outbound.warehouse_id,
+        notes: `#REJECTED #OUTBOUND-${outbound.outbound_id}`,
+        quantity: outbound.quantity,
+        product_id: outbound.product_id,
+      },
+    });
+
+    return { inbound, update, outbound };
+  } catch (error) {
+    console.log(error);
+    throw new Error("Error adding inbound");
+  }
+};
+
+export const approveOutbound = async (id: string) => {
+  const session = await auth();
+  try {
+    const outbound = await prisma.outbound.update({
+      where: {
+        outbound_id: id,
+      },
+      data: {
+        confirm: true,
+        confirmBy: session?.user.name,
+      },
+    });
+    return outbound;
+  } catch (error) {
+    console.log(error);
+    throw new Error("Error adding inbound");
+  }
+};

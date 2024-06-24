@@ -22,10 +22,17 @@ import {
 import React, { useEffect, useState } from "react";
 import { Outbound, Product, Satuan } from "@prisma/client";
 import { convertTotalStockToUnits } from "@/lib/stockInUnit";
-import { useQuery } from "@tanstack/react-query";
-import { getOutbound } from "@/lib/actions/outbound";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  approveOutbound,
+  getOutbound,
+  rejectOutbound,
+} from "@/lib/actions/outbound";
 import OutboundForm from "@/components/OutboundForm";
 import { Button } from "@/components/ui/button";
+import Condition from "@/components/Condition";
+import { queryClient } from "@/components/provider";
+import { toast } from "@/components/ui/use-toast";
 
 const StockCell = ({ total, Satuan }: { total: number; Satuan: Satuan[] }) => {
   const [stockInUnits, setStockInUnits] = useState<{ [key: string]: number }>(
@@ -69,65 +76,32 @@ const Page = () => {
   const [open, setOpen] = useState(false);
   const [openAdd, setOpenAdd] = useState(false);
   const [selected, setSelected] = useState<string>();
-  //   const deleteQuery = useMutation({
-  //     mutationFn: async (id: number) => await deleteCustomer(id),
-  //     onSuccess: () => {
-  //       queryClient.invalidateQueries({ queryKey: ["customer"] });
-
-  //       setOpen(false);
-  //       toast({
-  //         description: (
-  //           <div className="flex items-center justify-between gap-2">
-  //             <div>
-  //               <span className="text-green-500">
-  //                 <CheckCircle2 size={28} strokeWidth={1} />
-  //               </span>
-  //             </div>
-  //             <div>
-  //               <h3 className="text-lg">Customer Deleted!</h3>
-  //             </div>
-  //           </div>
-  //         ),
-  //       });
-  //     },
-  //     onError(error) {
-  //       toast({
-  //         title: `Error: ${error.message}`,
-  //         description: `${error.message}`,
-  //         variant: "destructive",
-  //       });
-  //     },
-  //   });
-  //   const deleteQuerys = useMutation({
-  //     mutationFn: async (customers: Product[]) =>
-  //       await deleteCustomers(customers),
-  //     onSuccess: () => {
-  //       queryClient.invalidateQueries({ queryKey: ["products"] });
-
-  //       setOpen(false);
-  //       toast({
-  //         description: (
-  //           <div className="flex items-center justify-between gap-2">
-  //             <div>
-  //               <span className="text-green-500">
-  //                 <CheckCircle2 size={28} strokeWidth={1} />
-  //               </span>
-  //             </div>
-  //             <div>
-  //               <h3 className="text-lg">Customer Deleted!</h3>
-  //             </div>
-  //           </div>
-  //         ),
-  //       });
-  //     },
-  //     onError(error) {
-  //       toast({
-  //         title: `Error: ${error.message}`,
-  //         description: `${error.message}`,
-  //         variant: "destructive",
-  //       });
-  //     },
-  //   });
+  const reject = useMutation({
+    mutationFn: async (id: string) => await rejectOutbound(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["outbound"] });
+    },
+    onError(error) {
+      toast({
+        title: `Error: ${error.message}`,
+        description: `${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+  const approve = useMutation({
+    mutationFn: async (id: string) => await approveOutbound(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["outbound"] });
+    },
+    onError(error) {
+      toast({
+        title: `Error: ${error.message}`,
+        description: `${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
   const columnsConfig: ColumnConfig<IOutbound>[] = [
     {
       accessorKey: "product.name",
@@ -152,14 +126,32 @@ const Page = () => {
       renderCell(cellValue, row) {
         return (
           <div>
-            Confirm : {row.confirm ? "Approved" : "Not Approved"}
+            {row.confirmBy === null
+              ? "no status"
+              : row.confirm
+                ? "Approved"
+                : "Rejected"}
             <br />
-            <Button size={"xs"} className="mr-2">
-              Approve
-            </Button>
-            <Button size={"xs"} variant={"outline"}>
-              Reject
-            </Button>
+            {row.confirmBy && `Confirm by : ${row.confirmBy}`}
+            <br />
+            <Condition show={row.confirmBy === null}>
+              <div className="flex">
+                <Button
+                  size={"xs"}
+                  className="mr-2"
+                  onClick={() => approve.mutate(row.outbound_id)}
+                >
+                  Approve
+                </Button>
+                <Button
+                  size={"xs"}
+                  variant={"outline"}
+                  onClick={() => reject.mutate(row.outbound_id)}
+                >
+                  Reject
+                </Button>
+              </div>
+            </Condition>
           </div>
         );
       },
