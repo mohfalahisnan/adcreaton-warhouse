@@ -9,6 +9,7 @@ import {
   Settings,
   Users,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
@@ -85,11 +86,15 @@ const menu: Menu[] = [
 ];
 
 const SidebarNavigation = (props: Props) => {
+  const session = useSession();
   const path = usePathname();
+  if (!session || !session.data) return null;
   return (
     <nav className="[&_svg]:w-4 px-4">
       <ul className="flex flex-col gap-2 text-sm">
         {menu.map((item, i) => {
+          // if (item.title === "Settings" && session.data.user.ROLE !== "ADMIN")
+          //   return null;
           return (
             <Link href={item.url} title={item.title} key={i}>
               <li

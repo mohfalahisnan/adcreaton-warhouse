@@ -2,6 +2,7 @@
 import { auth } from "@/app/auth";
 import { prisma } from "@/lib/prisma";
 import { Inbound } from "@prisma/client";
+import { format } from "date-fns";
 
 export const getInbound = async (id: number) => {
   try {
@@ -11,6 +12,7 @@ export const getInbound = async (id: number) => {
       },
       include: {
         product: true,
+        satuan: true,
       },
       orderBy: {
         createdAt: "desc",
@@ -43,6 +45,9 @@ export const confirmInbound = async (id: string) => {
 
 export const addInbound = async (data: Inbound & { product_name: string }) => {
   try {
+    console.log(data.satuan_id);
+    if (!data.satuan_id) throw new Error("no unit");
+
     await prisma.inbound.create({
       data: {
         quantity: data.quantity,
@@ -50,6 +55,12 @@ export const addInbound = async (data: Inbound & { product_name: string }) => {
         product: ${data.product_name}`,
         confirm: data.confirm || false,
         inputBy: data.inputBy,
+        satuan: {
+          connect: {
+            satuan_id: Number(data.satuan_id),
+          },
+        },
+        price: data.price,
         product: {
           connect: {
             product_id: data.product_id || "",
@@ -62,115 +73,19 @@ export const addInbound = async (data: Inbound & { product_name: string }) => {
         },
       },
     });
-    const stock = await prisma.stock.findFirst({
+    const currentStock = await prisma.satuan.findUnique({
       where: {
-        product_id: data.product_id || "",
-        warehouse_id: Number(data.warehouse_id),
+        satuan_id: Number(data.satuan_id),
       },
     });
-    if (stock) {
-      return await prisma.stock.update({
-        where: {
-          stock_id: stock.stock_id,
-        },
-        data: {
-          total: stock.total + data.quantity,
-        },
-      });
-    } else {
-      return await prisma.stock.create({
-        data: {
-          product_id: data.product_id || "",
-          warehouse_id: Number(data.warehouse_id),
-          total: data.quantity,
-        },
-      });
-    }
-  } catch (error) {
-    console.log(error);
-    throw new Error("Error adding inbound");
-  }
-};
-
-export const inboundCancelOrder = async ({
-  order_id,
-}: {
-  order_id: string;
-}) => {
-  const session = await auth();
-  try {
-    const order = await prisma.order.findUnique({
+    await prisma.satuan.update({
       where: {
-        order_id: order_id,
-      },
-      include: {
-        OrderItem: {
-          include: {
-            product: {
-              include: {
-                stock: true,
-              },
-            },
-            satuan: true,
-          },
-        },
-      },
-    });
-    if (!order) {
-      throw new Error("Order not found");
-    }
-    let warehouse_id = order.warehouse_id || 1;
-
-    for (const item of order.OrderItem) {
-      let qty = item.quantity * (item.satuan?.multiplier || 1);
-      const stock = await prisma.stock.findFirst({
-        where: {
-          product_id: item.product.product_id,
-          warehouse_id: warehouse_id,
-        },
-      });
-      if (stock) {
-        await prisma.stock.update({
-          where: {
-            stock_id: stock.stock_id,
-          },
-          data: {
-            total: stock.total + qty,
-          },
-        });
-      }
-      const inbound = await prisma.inbound.create({
-        data: {
-          inputBy: session?.user.name || "",
-          notes: `#CANCEL #ORDER-${order.order_code}`,
-          quantity: qty,
-          confirm: false,
-          product_id: item.product_id,
-          warehouse_id,
-        },
-      });
-
-      const update = await prisma.order.update({
-        where: {
-          order_id: order_id,
-        },
-        data: {
-          status: "CANCELED",
-        },
-      });
-      return { inbound, update };
-    }
-
-    const cancel = await prisma.order.update({
-      where: {
-        order_id: order_id,
+        satuan_id: Number(data.satuan_id),
       },
       data: {
-        status: "CANCELED",
+        total: (currentStock?.total || 0) + data.quantity,
       },
     });
-
-    return cancel;
   } catch (error) {
     console.log(error);
     throw new Error("Error adding inbound");
@@ -206,42 +121,10 @@ export const rejectInbound = async (id: string) => {
       throw new Error("Cannot Find inbound data");
     }
 
-    const stock = await prisma.stock.findFirst({
-      where: {
-        product_id: current.product_id || "",
-        warehouse_id: inbound.warehouse_id,
-      },
-    });
-
-    if (!stock) {
-      throw new Error("cannot find stock");
-    }
-
-    const update = await prisma.stock.update({
-      where: {
-        stock_id: stock.stock_id,
-      },
-      data: {
-        total: stock.total - inbound.quantity,
-      },
-    });
-
-    const outbound = await prisma.outbound.create({
-      data: {
-        inputBy: session?.user.name || "",
-        warehouse_id: inbound.warehouse_id,
-        notes: `#REJECTED #INBOUND-${inbound.inbound_id}`,
-        quantity: inbound.quantity,
-        product_id: inbound.product_id,
-        confirm: true,
-        confirmBy: session?.user.name,
-      },
-    });
-
-    return { inbound, update, outbound };
+    return inbound;
   } catch (error) {
     console.log(error);
-    throw new Error("Error adding inbound");
+    throw new Error("Error rejecting inbound");
   }
 };
 
@@ -261,5 +144,50 @@ export const approveInbound = async (id: string) => {
   } catch (error) {
     console.log(error);
     throw new Error("Error adding inbound");
+  }
+};
+
+export const getInboundDaily = async (warehouse_id: number) => {
+  const startOfWeek = new Date();
+  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+  const endOfWeek = new Date();
+  endOfWeek.setDate(endOfWeek.getDate() + (6 - endOfWeek.getDay()));
+  endOfWeek.setHours(23, 59, 59, 999);
+
+  try {
+    const inbounds = await prisma.inbound.findMany({
+      where: {
+        warehouse_id: warehouse_id,
+        createdAt: {
+          gte: startOfWeek,
+          lte: endOfWeek,
+        },
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    const chartData = Array.from({ length: 7 }, (_, i) => {
+      const day = new Date(startOfWeek);
+      day.setDate(day.getDate() + i);
+      return {
+        day: format(day, "dd"),
+        quantity: 0,
+        totalPrice: 0,
+      };
+    });
+
+    inbounds.forEach((inbound) => {
+      const dayIndex = new Date(inbound.createdAt).getDay();
+      chartData[dayIndex].quantity += inbound.quantity;
+      chartData[dayIndex].totalPrice += inbound.quantity * inbound.price;
+    });
+    console.log("inbound", chartData);
+    return chartData;
+  } catch (error) {
+    console.error("Failed to fetch daily inbounds:", error);
+    throw new Error("Failed to fetch daily inbounds");
   }
 };

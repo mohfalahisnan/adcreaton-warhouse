@@ -16,15 +16,17 @@ export const getUnit = async (id: string) => {
   }
 };
 
-export const addUnit = async (id: string, satuan: Satuan) => {
+export const addUnit = async (id: string, unit: Satuan) => {
   try {
-    const unit = await prisma.satuan.create({
+    const units = await prisma.satuan.create({
       data: {
-        ...satuan,
+        ...unit,
         product_id: id,
+        strata: unit.strata ?? false,
+        strataValue: unit.strataValue ?? undefined,
       },
     });
-    return satuan;
+    return units;
   } catch (error) {
     console.log(error);
     throw new Error("Error fetching unit");
@@ -37,7 +39,10 @@ export const editUnit = async (id: number, satuan: Satuan) => {
       where: {
         satuan_id: id,
       },
-      data: satuan,
+      data: {
+        ...satuan,
+        strataValue: satuan.strataValue ?? undefined,
+      },
     });
     return unit;
   } catch (error) {

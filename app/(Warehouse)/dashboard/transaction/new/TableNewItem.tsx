@@ -13,8 +13,7 @@ import React, { useEffect, useState } from "react";
 import { ProductSelect, SatuanSelect } from "./select";
 import { Input } from "@/components/ui/input";
 import { useGetProducts } from "@/hook/useProduct";
-import { tierPriceApplied } from "@/lib/tierPriceApplied";
-import { ISelectedProduct, addItem } from "@/lib/actions/order";
+import { addItem } from "@/lib/actions/order";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/components/provider";
@@ -38,6 +37,7 @@ const TableNewItem = ({
   const [qty, setQty] = useState(0);
   const [potongan, setPotongan] = useState(0);
   const [error, setError] = useState("");
+  const [appliedStrata, setAppliedStrata] = useState(0);
 
   const itemMutation = useMutation({
     mutationFn: (data: Omit<OrderItem, "order_item_id">) => {
@@ -93,27 +93,42 @@ const TableNewItem = ({
       discount: potongan,
       notes: "",
       order_id: orderId,
+      finalOrderFinal_order_id: null,
     });
   };
 
   useEffect(() => {
-    let multiplier =
-      productQuery.data
-        ?.find((item) => item.product_id === product)
-        ?.Satuan.find((unit) => unit.satuan_id === parseFloat(satuan || ""))
-        ?.multiplier || 1;
     if (!product) {
       setError("Product must be selected");
       return;
     }
-    if (
-      !stock.data?.total ||
-      qty * multiplier < 0 ||
-      qty * multiplier > stock.data.total
-    ) {
-      setError(`Stock tidak memadai, sisa stock : ${stock.data?.total}`);
+
+    // Handle strata price
+    const productData = productQuery.data?.find(
+      (item) => item.product_id === product,
+    );
+    const satuanData = productData?.Satuan.find(
+      (unit) => unit.satuan_id === parseFloat(satuan || ""),
+    );
+
+    const stock = satuanData?.total || 0;
+    if (qty > stock) {
+      setError(`Stock tidak memadai ${stock}`);
     } else {
       setError("");
+    }
+    const strataValue = satuanData?.strataValue;
+
+    if (strataValue && Array.isArray(strataValue)) {
+      const applicableStrata = strataValue.reduce((prev: any, curr: any) => {
+        return qty >= curr.quantity && curr.quantity > (prev?.quantity || 0)
+          ? curr
+          : prev;
+      }, null);
+
+      setAppliedStrata(applicableStrata ? applicableStrata.price : 0);
+    } else {
+      setAppliedStrata(0);
     }
   }, [qty, satuan, product]);
 
@@ -166,28 +181,16 @@ const TableNewItem = ({
             <TableCell>
               Rp.
               {formatRupiah(
-                productQuery.data?.find((item) => item.product_id === product)
-                  ?.sell_price || 0,
+                productQuery.data
+                  ?.find((item) => item.product_id === product)
+                  ?.Satuan.find(
+                    (unit) => unit.satuan_id === parseFloat(satuan || ""),
+                  )?.price || 0,
               )}
             </TableCell>
             <TableCell>
               Rp.
-              {formatRupiah(
-                (productQuery.data?.find((item) => item.product_id === product)
-                  ?.sell_price || 0) -
-                  (tierPriceApplied({
-                    ...(productQuery.data?.find(
-                      (item) => item.product_id === product,
-                    ) as unknown as ISelectedProduct),
-                    count:
-                      qty *
-                      (productQuery.data
-                        ?.find((item) => item.product_id === product)
-                        ?.Satuan.find(
-                          (unit) => unit.satuan_id === parseFloat(satuan || ""),
-                        )?.multiplier || 0),
-                  }) || 0),
-              )}
+              {formatRupiah(appliedStrata)}
             </TableCell>
             <TableCell className="w-[150px]">
               <Input
@@ -199,27 +202,27 @@ const TableNewItem = ({
             </TableCell>
             <TableCell>
               Rp.
-              {formatRupiah(
-                tierPriceApplied({
-                  ...(productQuery.data?.find(
-                    (item) => item.product_id === product,
-                  ) as unknown as ISelectedProduct),
-                  count:
-                    qty *
-                    (productQuery.data
-                      ?.find((item) => item.product_id === product)
-                      ?.Satuan.find(
-                        (unit) => unit.satuan_id === parseFloat(satuan || ""),
-                      )?.multiplier || 1),
-                }) *
-                  (productQuery.data
+              {appliedStrata === 0 &&
+                formatRupiah(
+                  ((productQuery.data
                     ?.find((item) => item.product_id === product)
                     ?.Satuan.find(
                       (unit) => unit.satuan_id === parseFloat(satuan || ""),
-                    )?.multiplier || 1) *
-                  qty -
-                  potongan || 0,
-              )}
+                    )?.price || 0) -
+                    potongan) *
+                    qty,
+                )}
+              {appliedStrata !== 0 &&
+                formatRupiah(
+                  ((productQuery.data
+                    ?.find((item) => item.product_id === product)
+                    ?.Satuan.find(
+                      (unit) => unit.satuan_id === parseFloat(satuan || ""),
+                    )?.price || 0) -
+                    appliedStrata -
+                    potongan) *
+                    qty,
+                )}
             </TableCell>
           </TableRow>
         </TableBody>

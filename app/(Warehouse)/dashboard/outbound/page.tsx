@@ -33,6 +33,7 @@ import { Button } from "@/components/ui/button";
 import Condition from "@/components/Condition";
 import { queryClient } from "@/components/provider";
 import { toast } from "@/components/ui/use-toast";
+import { useSession } from "next-auth/react";
 
 const StockCell = ({ total, Satuan }: { total: number; Satuan: Satuan[] }) => {
   const [stockInUnits, setStockInUnits] = useState<{ [key: string]: number }>(
@@ -65,6 +66,7 @@ const StockCell = ({ total, Satuan }: { total: number; Satuan: Satuan[] }) => {
 
 interface IOutbound extends Outbound {
   product: Product | null;
+  satuan: Satuan | null;
 }
 
 const Page = () => {
@@ -102,6 +104,8 @@ const Page = () => {
       });
     },
   });
+  const session = useSession();
+  if (!session || !session.data) return null;
   const columnsConfig: ColumnConfig<IOutbound>[] = [
     {
       accessorKey: "product.name",
@@ -110,6 +114,13 @@ const Page = () => {
     {
       accessorKey: "quantity",
       title: "Quantity",
+      renderCell(cellValue, row) {
+        return (
+          <div>
+            {cellValue} {row.satuan?.name}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "notes",
@@ -126,15 +137,19 @@ const Page = () => {
       renderCell(cellValue, row) {
         return (
           <div>
-            {row.confirmBy === null
-              ? "no status"
-              : row.confirm
-                ? "Approved"
-                : "Rejected"}
+            {!row.confirm && row.confirmBy !== null && "Rejected"}
+            {!row.confirm && row.confirmBy === null && "No Status"}
+            {row.confirm && "Approved"}
             <br />
             {row.confirmBy && `Confirm by : ${row.confirmBy}`}
             <br />
-            <Condition show={row.confirmBy === null}>
+            <Condition
+              show={
+                row.confirmBy === null ||
+                session.data.user.ROLE === "ADMIN" ||
+                session.data.user.ROLE === "APPROVAL"
+              }
+            >
               <div className="flex">
                 <Button
                   size={"xs"}

@@ -61,8 +61,6 @@ import { useRouter } from "next/navigation";
 import { queryClient } from "@/components/provider";
 import { ProductWithStock } from "@/interface";
 import { useLocalStorage } from "@/hook/useLocalstorage";
-import { hasWarehouseId } from "@/lib/filterById";
-import NewStock from "@/components/NewStock";
 
 export function DataTable({ data }: { data: ProductWithStock[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -161,52 +159,11 @@ export function DataTable({ data }: { data: ProductWithStock[] }) {
       },
     },
     {
-      accessorKey: "stock",
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="px-0"
-          >
-            Stock
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        );
-      },
-      cell: ({ row }) => {
-        const product = row.original;
-
-        return (
-          <div className="lowercase flex flex-row gap-2 relative group">
-            {product.stock.map((stock, i) => {
-              if (stock.warehouse_id === parseInt(warehouseId)) {
-                return (
-                  <span key={i}>
-                    {stock.total} {product.unit || "pcs"}
-                  </span>
-                );
-              }
-            })}
-            {hasWarehouseId(product.stock, parseInt(warehouseId)) ? (
-              ""
-            ) : (
-              <NewStock
-                productId={product.product_id}
-                warehouseId={parseInt(warehouseId)}
-              />
-            )}
-          </div>
-        );
-      },
-    },
-    {
       id: "inputBy",
       header: "Input By",
       enableHiding: true,
       accessorKey: "inputby",
     },
-
     {
       accessorKey: "sell_price",
       header: ({ column }) => (
@@ -232,7 +189,6 @@ export function DataTable({ data }: { data: ProductWithStock[] }) {
         return <div className="text-right font-medium mr-3">{formatted}</div>;
       },
     },
-
     {
       id: "actions",
       enableHiding: false,

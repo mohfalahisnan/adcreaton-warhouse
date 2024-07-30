@@ -26,14 +26,14 @@ import { Customer, User } from "@prisma/client";
 import { getCustomersWarehouse } from "@/lib/actions/customer";
 
 import { CustomerSelect, SalesSelect } from "./select";
-import AddOrderItem from "./addOrderItem";
 import { formatRupiah } from "@/lib/formatRupiah";
-import { tierPriceApplied } from "@/lib/tierPriceApplied";
 import { useRouter } from "next/navigation";
 import { CalculateTotalAmount } from "@/lib/CalculateTotalAmount";
 import { ResponsiveDialog } from "@/components/ResponsiveDialog";
 import { Plus } from "lucide-react";
 import CustomerForm from "@/components/CustomerForm";
+import EditOrderItem from "./editOrderItem";
+import AddOrderItem from "./addOrderItem";
 
 function Page({ params }: { params: { id: string } }) {
   //state
@@ -44,7 +44,7 @@ function Page({ params }: { params: { id: string } }) {
   const [storedSales, setStoredSales] = useLocalStorage("sales_id", "");
   const [salesId, setSalesId] = useState<string>();
   const [customerId, setCustomerId] = useState<Customer>();
-  const [orderId, setOrderId] = useState<string>();
+  const [orderId, setOrderId] = useState<string>(id);
   const [orderCode, setOrderCode] = useState<string>();
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [openAdd, setOpenAdd] = useState(false);
@@ -81,7 +81,7 @@ function Page({ params }: { params: { id: string } }) {
       });
     },
     onSuccess: (data) => {
-      setOrderId(data?.order_id);
+      setOrderId(data?.order_id || "");
       setOrderCode(data?.order_code);
     },
     onError(error) {
@@ -172,6 +172,12 @@ function Page({ params }: { params: { id: string } }) {
   }, []);
 
   useEffect(() => {
+    if (currentOrder.data) {
+      setCustomerId(currentOrder.data.customer_name as Customer);
+    }
+  }, [currentOrder.data]);
+
+  useEffect(() => {
     if (getOrderItem.data) {
       setTotalAmount(CalculateTotalAmount({ data: getOrderItem.data }));
     }
@@ -199,7 +205,30 @@ function Page({ params }: { params: { id: string } }) {
 
   if (queryGetSales.isLoading) return <div>Loading...</div>;
   if (queryGetCustomers.isLoading) return <div>Loading...</div>;
-
+  if (currentOrder.data?.status === "ON_DELEVERY")
+    return (
+      <div className="text-center font-bold text-xl my-8 text-orange-600">
+        Transaksi yang sedang dikirim tidak dapat diubah.
+      </div>
+    );
+  if (currentOrder.data?.status === "PAID")
+    return (
+      <div className="text-center font-bold text-xl my-8 text-orange-600">
+        Transaksi yang sudah dibayar tidak bisa diubah.
+      </div>
+    );
+  if (currentOrder.data?.status === "SUCCESS")
+    return (
+      <div className="text-center font-bold text-xl my-8 text-orange-600">
+        Transaksi yang sudah sukses tidak bisa diubah.
+      </div>
+    );
+  if (currentOrder.data?.status === "CANCELED")
+    return (
+      <div className="text-center font-bold text-xl my-8 text-orange-600">
+        Transaksi yang sudah di cancel tidak bisa diubah.
+      </div>
+    );
   return (
     <div className="fixed top-0 left-0 w-full h-full bg-card flex items-start justify-center">
       <div className="w-full p-8">
@@ -286,6 +315,7 @@ function Page({ params }: { params: { id: string } }) {
               <TableHead>Strata</TableHead>
               <TableHead>Potongan</TableHead>
               <TableHead>Total</TableHead>
+              <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -296,30 +326,25 @@ function Page({ params }: { params: { id: string } }) {
                 <TableCell>{item.quantity}</TableCell>
                 <TableCell>{item.satuan?.name}</TableCell>
                 <TableCell>
-                  Rp.{formatRupiah(item.product.sell_price)}
+                  Rp.{formatRupiah(item.satuan?.price || 0)}
                 </TableCell>
                 <TableCell>
-                  Rp.
-                  {formatRupiah(
-                    item.product.sell_price -
-                      (tierPriceApplied({
-                        ...item.product,
-                        count: item.quantity * (item.satuan?.multiplier || 1),
-                      }) || 0),
-                  )}
+                  Rp.{formatRupiah(item.satuan?.price || 0)}
                 </TableCell>
                 <TableCell>Rp.{formatRupiah(item.discount || 0)}</TableCell>
                 <TableCell>
                   Rp.
                   {formatRupiah(
-                    tierPriceApplied({
-                      ...item.product,
-                      count: item.quantity * (item.satuan?.multiplier || 1),
-                    }) *
-                      item.quantity *
-                      (item.satuan?.multiplier || 1) -
-                      (item.discount || 0),
+                    ((item.satuan?.price || 0) - (item.discount || 0)) *
+                      item.quantity,
                   )}
+                </TableCell>
+                <TableCell className="flex gap-2">
+                  <EditOrderItem
+                    orderId={orderId || ""}
+                    orderItemId={item.order_item_id}
+                  />
+                  <Button size={"xs"}>Hapus</Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -332,7 +357,7 @@ function Page({ params }: { params: { id: string } }) {
           </TableBody>
           <TableHeader className="bg-accent">
             <TableRow>
-              <TableHead colSpan={7} className="text-right">
+              <TableHead colSpan={8} className="text-right">
                 Total
               </TableHead>
               <TableHead>Rp.{formatRupiah(totalAmount)}</TableHead>
@@ -342,7 +367,7 @@ function Page({ params }: { params: { id: string } }) {
         <div className="flex items-end justify-end gap-4 mt-4">
           <Button
             variant="outline"
-            onClick={() => deleteMutation.mutate(orderId || "")}
+            onClick={() => navigation.push("/dashboard/transaction")}
           >
             Cancel
           </Button>

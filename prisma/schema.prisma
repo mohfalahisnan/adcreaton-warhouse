@@ -79,17 +79,21 @@ model Order {
   sales_name User?       @relation(fields: [sales_id], references: [user_id], name: "SalesRelation")
 
   customer_id   Int?
-  customer_name Customer? @relation(fields: [customer_id], references: [customer_id])
+  customer_name Customer? @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade)
 
   warehouse_id Int?
 
   shipment_id String?
-  shipment    Shipment? @relation(fields: [shipment_id], references: [shipment_id])
+  shipment    Shipment? @relation(fields: [shipment_id], references: [shipment_id], onDelete: Cascade)
 
   status    StatusOrder @default(PENDING)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   Payment   Payment[]
+
+  Shipping   Shipping[]
+  FinalOrder FinalOrder?
+  ReturItem  ReturItem[]
 }
 
 model OrderItem {
@@ -104,6 +108,37 @@ model OrderItem {
   notes    String?
   Order    Order?  @relation(fields: [order_id], references: [order_id], onDelete: Cascade)
   order_id String?
+
+  ReturItem                ReturItem?
+  FinalOrder               FinalOrder? @relation(fields: [finalOrderFinal_order_id], references: [final_order_id], onDelete: Cascade)
+  finalOrderFinal_order_id String?
+}
+
+model ReturItem {
+  retur_id String @id @default(uuid())
+
+  order_item_id String    @unique
+  orderItem     OrderItem @relation(fields: [order_item_id], references: [order_item_id], onDelete: Cascade)
+
+  order_id String?
+  Order    Order?  @relation(fields: [order_id], references: [order_id])
+
+  quantity       Float
+  notes          String
+  FinalOrder     FinalOrder? @relation(fields: [final_order_id], references: [final_order_id], onDelete: Cascade)
+  final_order_id String?
+}
+
+model FinalOrder {
+  final_order_id String @id @default(uuid())
+
+  order_id String @unique
+  Oder     Order  @relation(fields: [order_id], references: [order_id], onDelete: Cascade)
+
+  amount Float?
+
+  OrderItem OrderItem[]
+  ReturItem ReturItem[]
 }
 
 model TierPrice {
@@ -118,6 +153,9 @@ model Inbound {
   inbound_id String    @id @default(uuid())
   product    Product?  @relation(fields: [product_id], references: [product_id], onDelete: SetNull, onUpdate: Cascade)
   quantity   Float
+  satuan_id  Int?
+  satuan     Satuan?   @relation(fields: [satuan_id], references: [satuan_id])
+  price      Int
   notes      String
   warehouse  Warehouse @relation(fields: [warehouse_id], references: [warehouse_id])
   confirm    Boolean?  @default(false)
@@ -134,6 +172,9 @@ model Outbound {
   outbound_id String    @id @default(uuid())
   product     Product?  @relation(fields: [product_id], references: [product_id], onDelete: SetNull, onUpdate: Cascade)
   quantity    Float
+  satuan_id   Int
+  satuan      Satuan?   @relation(fields: [satuan_id], references: [satuan_id])
+  price       Int
   notes       String
   warehouse   Warehouse @relation(fields: [warehouse_id], references: [warehouse_id])
   confirm     Boolean   @default(false)
@@ -146,19 +187,31 @@ model Outbound {
   inputBy      String
 }
 
+model Shipping {
+  shipping_id String          @id @default(uuid())
+  order       Order[]
+  car         Car             @relation(fields: [car_id], references: [car_id])
+  notes       String?
+  inputBy     String?
+  status      StatusShipment? @default(PENDING)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  car_id String
+}
+
 model Shipment {
-  shipment_id   String         @id @default(uuid())
-  shipment_code String         @unique
-  origin        Warehouse      @relation(fields: [warehouse_id], references: [warehouse_id])
-  destination   Customer?      @relation(fields: [customer_id], references: [customer_id])
-  shippedDate   DateTime
-  deliveryDate  DateTime?
-  warehouse_id  Int
-  customer_id   Int?
-  note          String?
-  order_id      String?
-  Order         Order[]
-  status        StatusShipment @default(PENDING)
+  shipment_id  String         @id @default(uuid())
+  origin       Warehouse      @relation(fields: [warehouse_id], references: [warehouse_id])
+  destination  Customer?      @relation(fields: [customer_id], references: [customer_id])
+  shippedDate  DateTime
+  deliveryDate DateTime?
+  warehouse_id Int
+  customer_id  Int?
+  note         String?
+  order_id     String?
+  Order        Order[]
+  status       StatusShipment @default(PENDING)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -182,8 +235,9 @@ model Car {
   shipment          Shipment[]
   available         Boolean    @default(true)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  Shipping  Shipping[]
 }
 
 model Warehouse {
@@ -207,13 +261,11 @@ model Warehouse {
 }
 
 model Product {
-  product_id  String  @id @default(uuid())
-  image       String
-  name        String
-  unit        String  @default("pcs")
-  sell_price  Float
-  buy_price   Float
-  tier_price  String?
+  product_id String @id @default(uuid())
+  image      String
+  name       String
+  unit       String @default("pcs")
+
   description String
 
   stock       Stock[]
@@ -232,8 +284,10 @@ model Product {
 }
 
 model Stock {
-  stock_id Int @id @default(autoincrement())
+  stock_id Int    @id @default(autoincrement())
   total    Int
+  unit_id  Int
+  unit     Satuan @relation(fields: [unit_id], references: [satuan_id])
 
   warehouse_id Int
   warehouse    Warehouse @relation(fields: [warehouse_id], references: [warehouse_id])
@@ -247,8 +301,8 @@ model Payment {
   amount      Float
   checked     Boolean       @default(false)
   checkedBy   String?
-  orderId     String        @unique
-  order       Order         @relation(fields: [orderId], references: [order_id])
+  orderId     String?       @unique
+  order       Order?        @relation(fields: [orderId], references: [order_id])
   inputBy     String
   method      PaymentMethod @default(CASH)
   notes       String?
@@ -259,13 +313,20 @@ model Payment {
 }
 
 model Satuan {
-  satuan_id  Int    @id @default(autoincrement())
-  name       String
-  multiplier Int
+  satuan_id   Int     @id @default(autoincrement())
+  name        String
+  multiplier  Int
+  price       Int
+  strata      Boolean @default(false)
+  strataValue Json?
+  total       Int?    @default(0)
 
   product_id String
   product    Product     @relation(fields: [product_id], references: [product_id], onDelete: Cascade, onUpdate: Cascade)
   OrderItem  OrderItem[]
+  Stock      Stock[]
+  Inbound    Inbound[]
+  Outbound   Outbound[]
 }
 
 model Category {
@@ -298,6 +359,7 @@ enum StatusOrder {
   SUCCESS
   FAILED
   CANCELED
+  PAID
 }
 
 enum StatusShipment {

@@ -27,9 +27,11 @@ import { deleteUsers } from "@/lib/actions/accounts";
 import { User } from "@prisma/client";
 import { useMutation } from "@tanstack/react-query";
 import { CheckCircle2, Plus } from "lucide-react";
+import { useSession } from "next-auth/react";
 import React, { useState } from "react";
 
 const Page = () => {
+  const session = useSession();
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
   const { data, isLoading } = useGetEmployee({
     warehouse_id: parseInt(warehouseId),
@@ -180,6 +182,7 @@ const Page = () => {
           data={data}
           onDelete={handleDelete}
           onPrint={handlePrint}
+          deleteButton={session.data?.user.ROLE === "ADMIN"}
         />
       )}
       <AlertDialog open={open}>

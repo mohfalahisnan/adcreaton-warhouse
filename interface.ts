@@ -13,6 +13,7 @@ export type ProductWithStock = Prisma.ProductGetPayload<{
     stock: {
       include: {
         warehouse: true;
+        unit: true;
       };
     };
     Satuan: true;

@@ -21,6 +21,7 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import useMediaQuery from "@/hook/useMediaQuery";
+import { cn } from "@/lib/utils";
 
 interface DrawerDialogDemoProps {
   title: string;
@@ -30,6 +31,7 @@ interface DrawerDialogDemoProps {
   triggerTitle?: string;
   triggerContent?: React.ReactNode;
   open?: boolean; // Menambahkan prop open
+  className?: string;
   onOpenChange?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
@@ -42,6 +44,7 @@ export function ResponsiveDialog({
   triggerContent,
   open,
   onOpenChange,
+  className,
 }: DrawerDialogDemoProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -56,7 +59,7 @@ export function ResponsiveDialog({
             <Button variant="outline">{triggerTitle}</Button>
           )}
         </DialogTrigger>
-        <DialogContent className="sm:max-w-5xl">
+        <DialogContent className={cn("sm:max-w-3xl", className)}>
           <DialogHeader>
             <DialogTitle className="capitalize">{title}</DialogTitle>
             <DialogDescription>{description}</DialogDescription>

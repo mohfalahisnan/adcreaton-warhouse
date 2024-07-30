@@ -33,6 +33,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { queryClient } from "@/components/provider";
 import Condition from "@/components/Condition";
+import { useSession } from "next-auth/react";
 
 const StockCell = ({ total, Satuan }: { total: number; Satuan: Satuan[] }) => {
   const [stockInUnits, setStockInUnits] = useState<{ [key: string]: number }>(
@@ -65,9 +66,11 @@ const StockCell = ({ total, Satuan }: { total: number; Satuan: Satuan[] }) => {
 
 interface IInbound extends Inbound {
   product: Product | null;
+  satuan: Satuan | null;
 }
 
 const Page = () => {
+  const session = useSession();
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
   const { data } = useQuery({
     queryKey: ["inbound"],
@@ -102,6 +105,7 @@ const Page = () => {
   const [open, setOpen] = useState(false);
   const [openAdd, setOpenAdd] = useState(false);
   const [selected, setSelected] = useState<string>();
+  if (!session || !session.data) return null;
   //   const deleteQuery = useMutation({
   //     mutationFn: async (id: number) => await deleteCustomer(id),
   //     onSuccess: () => {
@@ -169,6 +173,13 @@ const Page = () => {
     {
       accessorKey: "quantity",
       title: "Quantity",
+      renderCell(cellValue, row) {
+        return (
+          <div>
+            {cellValue} {row.satuan?.name}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "notes",
@@ -185,15 +196,19 @@ const Page = () => {
       renderCell(cellValue, row) {
         return (
           <div>
-            {row.confirmBy === null
-              ? "no status"
-              : row.confirm
-                ? "Approved"
-                : "Rejected"}
+            {!row.confirm && row.confirmBy !== null && "Rejected"}
+            {!row.confirm && row.confirmBy === null && "No Status"}
+            {row.confirm && "Approved"}
             <br />
             {row.confirmBy && `Confirm by : ${row.confirmBy}`}
             <br />
-            <Condition show={row.confirmBy === null}>
+            <Condition
+              show={
+                row.confirmBy === null ||
+                session.data.user.ROLE === "ADMIN" ||
+                session.data.user.ROLE === "APPROVAL"
+              }
+            >
               <div className="flex">
                 <Button
                   size={"xs"}

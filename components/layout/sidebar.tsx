@@ -1,5 +1,5 @@
 "use client";
-import { ChevronsUpDown, Plus } from "lucide-react";
+import { ChevronsUpDown } from "lucide-react";
 import React from "react";
 import {
   DropdownMenu,
@@ -15,14 +15,18 @@ import { useGetWarehouses } from "@/hook/useWarehouse";
 import { filterById } from "@/lib/filterById";
 import { useRouter } from "next/navigation";
 import { useSetting } from "@/hook/useSetting";
+import { useSession } from "next-auth/react";
 
 const Sidebar = () => {
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
+  const session = useSession();
   const { data } = useGetWarehouses({});
   const setting = useSetting({});
   console.log(data);
   console.log(setting.data);
+
   const router = useRouter();
+  if (!session || !session.data) return null;
   if (!data)
     return (
       <div className="hidden md:flex flex-col flex-shrink-0 min-h-screen bg-primary text-background w-52"></div>
@@ -52,6 +56,7 @@ const Sidebar = () => {
               variant={"outline"}
               size={"sm"}
               className="bg-primary flex justify-between w-full rounded"
+              // disabled={session.data.user.ROLE !== "ADMIN"}
             >
               {selected[0]?.name}
               <ChevronsUpDown size={16} />
@@ -71,14 +76,13 @@ const Sidebar = () => {
                 </DropdownMenuItem>
               );
             })}
-            <DropdownMenuItem>
+            {/* <DropdownMenuItem>
               <Plus size={14} />
               Add
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-
       <SidebarNavigation />
     </div>
   );

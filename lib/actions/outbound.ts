@@ -2,6 +2,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/app/auth";
 import { Outbound } from "@prisma/client";
+import { format } from "date-fns";
 
 export const getOutbound = async (id: number) => {
   try {
@@ -11,6 +12,7 @@ export const getOutbound = async (id: number) => {
       },
       include: {
         product: true,
+        satuan: true,
       },
       orderBy: {
         createdAt: "desc",
@@ -52,6 +54,12 @@ export const addOutbound = async (
         product: ${data.product_name}`,
         confirm: data.confirm || false,
         inputBy: data.inputBy,
+        satuan: {
+          connect: {
+            satuan_id: Number(data.satuan_id),
+          },
+        },
+        price: data.price,
         product: {
           connect: {
             product_id: data.product_id || "",
@@ -64,30 +72,18 @@ export const addOutbound = async (
         },
       },
     });
-    const stock = await prisma.stock.findFirst({
+    const satuan = await prisma.satuan.findUnique({
+      where: { satuan_id: Number(data.satuan_id) },
+    });
+    await prisma.satuan.update({
       where: {
+        satuan_id: Number(data.satuan_id),
+      },
+      data: {
         product_id: data.product_id || "",
-        warehouse_id: Number(data.warehouse_id),
+        total: (satuan?.total || 0) - data.quantity,
       },
     });
-    if (stock) {
-      return await prisma.stock.update({
-        where: {
-          stock_id: stock.stock_id,
-        },
-        data: {
-          total: stock.total - data.quantity,
-        },
-      });
-    } else {
-      return await prisma.stock.create({
-        data: {
-          product_id: data.product_id || "",
-          warehouse_id: Number(data.warehouse_id),
-          total: data.quantity,
-        },
-      });
-    }
   } catch (error) {
     console.log(error);
     throw new Error("Error adding outbound");
@@ -123,40 +119,10 @@ export const rejectOutbound = async (id: string) => {
       throw new Error("Cannot Find outbound data");
     }
 
-    const stock = await prisma.stock.findFirst({
-      where: {
-        product_id: current.product_id || "",
-        warehouse_id: outbound.warehouse_id,
-      },
-    });
-
-    if (!stock) {
-      throw new Error("cannot find stock");
-    }
-
-    const update = await prisma.stock.update({
-      where: {
-        stock_id: stock.stock_id,
-      },
-      data: {
-        total: stock.total + outbound.quantity,
-      },
-    });
-
-    const inbound = await prisma.inbound.create({
-      data: {
-        inputBy: session?.user.name || "",
-        warehouse_id: outbound.warehouse_id,
-        notes: `#REJECTED #OUTBOUND-${outbound.outbound_id}`,
-        quantity: outbound.quantity,
-        product_id: outbound.product_id,
-      },
-    });
-
-    return { inbound, update, outbound };
+    return outbound;
   } catch (error) {
     console.log(error);
-    throw new Error("Error adding inbound");
+    throw new Error("Error rejecting outbound");
   }
 };
 
@@ -175,6 +141,51 @@ export const approveOutbound = async (id: string) => {
     return outbound;
   } catch (error) {
     console.log(error);
-    throw new Error("Error adding inbound");
+    throw new Error("Error approving outbound");
+  }
+};
+
+export const getOutboundDaily = async (warehouse_id: number) => {
+  const startOfWeek = new Date();
+  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+  const endOfWeek = new Date();
+  endOfWeek.setDate(endOfWeek.getDate() + (6 - endOfWeek.getDay()));
+  endOfWeek.setHours(23, 59, 59, 999);
+
+  try {
+    const outbounds = await prisma.outbound.findMany({
+      where: {
+        warehouse_id: warehouse_id,
+        createdAt: {
+          gte: startOfWeek,
+          lte: endOfWeek,
+        },
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    const chartData = Array.from({ length: 7 }, (_, i) => {
+      const day = new Date(startOfWeek);
+      day.setDate(day.getDate() + i);
+      return {
+        day: format(day, "dd"),
+        quantity: 0,
+        totalPrice: 0,
+      };
+    });
+
+    outbounds.forEach((outbound) => {
+      const dayIndex = new Date(outbound.createdAt).getDay();
+      chartData[dayIndex].quantity += outbound.quantity;
+      chartData[dayIndex].totalPrice += outbound.quantity * outbound.price;
+    });
+    console.log("outbound", chartData);
+    return chartData;
+  } catch (error) {
+    console.error("Failed to fetch daily outbounds:", error);
+    throw new Error("Failed to fetch daily outbounds");
   }
 };

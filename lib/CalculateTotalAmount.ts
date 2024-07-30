@@ -1,5 +1,4 @@
 import { Prisma } from "@prisma/client";
-import { tierPriceApplied } from "./tierPriceApplied";
 
 export const CalculateTotalAmount = ({
   data,
@@ -15,13 +14,51 @@ export const CalculateTotalAmount = ({
     };
   }>;
 }) => {
-  let totalItem = 0;
-  data.OrderItem.forEach((item) => {
-    totalItem +=
-      item.quantity *
-        (tierPriceApplied({ ...item.product, count: item.quantity }) *
-          (item.satuan?.multiplier || 1)) -
-      (item.discount || 0);
-  });
-  return totalItem;
+  let totals = data.OrderItem.reduce((total, item) => {
+    let strataValue = item.satuan?.strataValue || [];
+    //@ts-ignore
+    let applicableStrata = strataValue.reduce(
+      //@ts-ignore
+      (prev, curr) => {
+        return item.quantity >= curr.quantity &&
+          curr.quantity > (prev?.quantity || 0)
+          ? curr
+          : prev;
+      },
+      { quantity: 0, price: 0 } // Initial value for reduce
+    );
+
+    let price = item.satuan?.strata
+      ? item.satuan.price - applicableStrata.price
+      : item.satuan?.price || 0;
+    let discount = item.discount || 0;
+
+    return total + item.quantity * (price - discount);
+  }, 0);
+
+  return totals;
+};
+
+export const getApplicablePrice = (
+  item: Prisma.OrderItemGetPayload<{
+    include: {
+      product: true;
+      satuan: true;
+    };
+  }>
+) => {
+  let strataValue = item.satuan?.strataValue || [];
+  //@ts-ignore
+  let applicableStrata = strataValue.reduce(
+    //@ts-ignore
+    (prev, curr) => {
+      return item.quantity >= curr.quantity &&
+        curr.quantity > (prev?.quantity || 0)
+        ? curr
+        : prev;
+    },
+    { quantity: 0, price: 0 } // Initial value for reduce
+  );
+
+  return item.satuan?.strata ? applicableStrata.price : item.satuan?.price || 0;
 };

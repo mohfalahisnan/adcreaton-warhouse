@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useLocalStorage } from "@/hook/useLocalstorage";
 
 const Payment = ({ data }: { data: TransactionTable }) => {
   const [open, setOpen] = useState(false);
@@ -35,8 +36,8 @@ const Payment = ({ data }: { data: TransactionTable }) => {
       ) : (
         <div>
           <Condition show={payment !== null}>
-            <h2 className="text-green-500 flex flex-row items-center justify-center gap-2">
-              <CheckIcon size={14} /> Payment Success
+            <h2 className="text-green-500 flex flex-row items-center justify-center gap-1">
+              <CheckIcon size={14} /> Success
             </h2>
           </Condition>
           <Condition show={payment === null}>
@@ -45,7 +46,7 @@ const Payment = ({ data }: { data: TransactionTable }) => {
                 Bayar
               </Button>
               <h2 className="text-red-500 flex flex-row items-center justify-center gap-2">
-                <XCircle size={14} /> No Payment Found
+                <XCircle size={14} /> No Payment
               </h2>
             </div>
           </Condition>
@@ -66,24 +67,33 @@ const Bayar = ({
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   const session = useSession();
+  const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
   const [amount, setAmount] = useState<number>(data.totalAmount || 0);
   const [method, setMethod] = useState<PaymentMethod>("CASH");
   const [note, setNote] = useState<string>();
   const createPaymentMutation = useMutation({
     mutationFn: async () => {
-      const create = await createPayment({
-        order: {
-          connect: {
-            order_id: data.order_id,
+      const create = await createPayment(
+        {
+          order: {
+            connect: {
+              order_id: data.order_id,
+            },
+          },
+          amount: amount || 0,
+          inputBy: session?.data?.user?.name || "",
+          method: method || "CASH",
+          notes: note || "",
+          warehouse: {
+            connect: {
+              warehouse_id: parseFloat(warehouseId),
+            },
           },
         },
-        amount: amount || 0,
-        inputBy: session?.data?.user?.name || "",
-        method: method || "CASH",
-        notes: note || "",
-      });
+        data.order_id,
+      );
       if (create) {
-        return await updateOrderStatus(data.order_id, "ON_DELEVERY");
+        return await updateOrderStatus(data.order_id, "PAID");
       }
     },
 

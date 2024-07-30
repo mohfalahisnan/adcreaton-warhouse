@@ -20,16 +20,18 @@ import {
 } from "./ui/form";
 import { Input } from "./ui/input";
 import Condition from "./Condition";
-import { Satuan } from "@prisma/client";
+import { Prisma, Satuan } from "@prisma/client";
 import { toast } from "./ui/use-toast";
 import { queryClient } from "./provider";
+import { StrataValue } from "@/lib/strataValue";
 
 function UnitForm({ id }: { id: string }) {
   const [open, setOpen] = useState(false);
   const [add, setAdd] = useState(false);
   const [edit, setEdit] = useState(false);
+  const [strata, setStrata] = useState<StrataValue[]>();
   const [selected, setSelected] = useState<Satuan | null>(null);
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["unit", id],
     queryFn: () => getUnit(id),
   });
@@ -117,12 +119,32 @@ function UnitForm({ id }: { id: string }) {
     satuan_id: z.number().optional(),
     name: z.string(),
     multiplier: z.number(),
+    price: z.number(),
+    strata: z.boolean().default(false),
+    strataValue: z
+      .array(
+        z.object({
+          price: z.number(),
+          quantity: z.number(),
+        })
+      )
+      .optional(),
   });
 
   const formSchemaEdit = z.object({
     satuan_id: z.number().optional(),
     name: z.string().optional(),
     multiplier: z.number().optional(),
+    price: z.number().optional(),
+    strata: z.boolean().default(false),
+    strataValue: z
+      .array(
+        z.object({
+          price: z.number(),
+          quantity: z.number(),
+        })
+      )
+      .optional(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -136,15 +158,24 @@ function UnitForm({ id }: { id: string }) {
       satuan_id: selected?.satuan_id,
       name: selected?.name,
       multiplier: selected?.multiplier,
+      price: selected?.price,
+      strata: selected?.strata ?? false,
+      strataValue: selected?.strataValue
+        ? (selected.strataValue as { price: number; quantity: number }[])
+        : [],
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    addMutation.mutate(values as Satuan);
+    addMutation.mutate(values as unknown as Satuan);
   }
   async function onSubmitEdit(values: z.infer<typeof formSchemaEdit>) {
     values.satuan_id = selected?.satuan_id;
-    editMutation.mutate(values as Satuan);
+    values.strata = selected?.strata || false;
+    (values.strataValue = selected?.strataValue
+      ? (selected.strataValue as { price: number; quantity: number }[])
+      : []),
+      editMutation.mutate(values as unknown as Satuan);
   }
 
   return (
@@ -168,6 +199,8 @@ function UnitForm({ id }: { id: string }) {
               </Button>
             )}
           </div>
+
+          {/* add */}
           <Condition show={add && !edit}>
             <div>
               <Form {...form}>
@@ -210,6 +243,144 @@ function UnitForm({ id }: { id: string }) {
                         </FormItem>
                       )}
                     />
+                    <FormField
+                      control={form.control}
+                      name="price"
+                      render={({ field }) => (
+                        <FormItem className="w-full">
+                          <FormLabel>Price</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="Price..."
+                              {...field}
+                              value={field.value ? Number(field.value) : ""}
+                              onChange={(e) =>
+                                field.onChange(Number(e.target.value))
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="mt-4">
+                    <FormField
+                      control={form.control}
+                      name="strata"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <div className="flex gap-2 items-center">
+                              Strata :
+                              <Input
+                                type="checkbox"
+                                className="w-4 h-4"
+                                checked={field.value}
+                                onChange={(e) =>
+                                  field.onChange(e.target.checked)
+                                }
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Condition show={form.watch("strata")}>
+                      <FormField
+                        control={form.control}
+                        name="strataValue"
+                        render={({ field }) => (
+                          <FormItem className="w-full">
+                            <FormLabel>Strata Value</FormLabel>
+                            <FormControl>
+                              <div>
+                                {field.value && field.value.length > 0 ? (
+                                  field.value.map(
+                                    (strata: StrataValue, index: number) => (
+                                      <div
+                                        key={index}
+                                        className="flex gap-2 items-end mb-2"
+                                      >
+                                        <div className="w-full">
+                                          <FormLabel>Quantity :</FormLabel>
+                                          <Input
+                                            type="number"
+                                            placeholder="Quantity"
+                                            value={strata.quantity}
+                                            onChange={(e) => {
+                                              if (Array.isArray(field.value)) {
+                                                const newValue = [
+                                                  ...field.value,
+                                                ];
+                                                newValue[index].quantity =
+                                                  Number(e.target.value);
+                                                field.onChange(newValue);
+                                              }
+                                            }}
+                                          />
+                                        </div>
+                                        <div className="w-full">
+                                          <FormLabel>Price :</FormLabel>
+                                          <Input
+                                            type="number"
+                                            placeholder="Price"
+                                            value={strata.price}
+                                            onChange={(e) => {
+                                              if (Array.isArray(field.value)) {
+                                                const newValue = [
+                                                  ...field.value,
+                                                ];
+                                                newValue[index].price = Number(
+                                                  e.target.value
+                                                );
+                                                field.onChange(newValue);
+                                              }
+                                            }}
+                                          />
+                                        </div>
+                                        <Button
+                                          type="button"
+                                          onClick={() => {
+                                            if (Array.isArray(field.value)) {
+                                              const newValue =
+                                                field.value.filter(
+                                                  (_: any, i: number) =>
+                                                    i !== index
+                                                );
+                                              field.onChange(newValue);
+                                            }
+                                          }}
+                                        >
+                                          Remove
+                                        </Button>
+                                      </div>
+                                    )
+                                  )
+                                ) : (
+                                  <p>No strata values added</p>
+                                )}
+                                <Button
+                                  type="button"
+                                  onClick={() => {
+                                    const newValue = [
+                                      ...(field.value || []),
+                                      { quantity: 0, price: 0 },
+                                    ];
+                                    field.onChange(newValue);
+                                  }}
+                                >
+                                  Add Strata
+                                </Button>
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </Condition>
                   </div>
                   <div className="w-full flex justify-end">
                     <Button
@@ -233,76 +404,258 @@ function UnitForm({ id }: { id: string }) {
               </Form>
             </div>
           </Condition>
+
+          {/* edit */}
           <Condition show={edit && !add}>
-            <div>
-              <Form {...editForm}>
-                <form
-                  onSubmit={editForm.handleSubmit(onSubmitEdit)}
-                  className="space-y-4"
-                >
-                  <div className="flex gap-4">
-                    <FormField
-                      control={editForm.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem className="w-full">
-                          <FormLabel>Name</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="text"
-                              defaultValue={selected?.name}
-                              placeholder="Name"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={editForm.control}
-                      name="multiplier"
-                      render={({ field }) => (
-                        <FormItem className="w-full">
-                          <FormLabel>Quantity</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              defaultValue={selected?.multiplier}
-                              placeholder="Multiplier..."
-                              {...field}
-                              // value={field.value ? Number(field.value) : ""}
-                              onChange={(e) =>
-                                field.onChange(Number(e.target.value))
-                              }
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="w-full flex justify-end">
-                    <Button
-                      type="reset"
-                      className="flex gap-2 mr-4"
-                      variant={"outline"}
-                      onClick={() => {
-                        setEdit(false);
-                        setSelected(null);
-                      }}
-                    >
-                      <X size={16} />
-                      Cancel
-                    </Button>
-                    <Button type="submit" className="flex gap-2">
-                      <Save size={16} />
-                      Save
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </div>
+            <Condition show={!isLoading}>
+              <div>
+                <Form {...editForm}>
+                  <form
+                    onSubmit={editForm.handleSubmit(onSubmitEdit)}
+                    className="space-y-4"
+                  >
+                    <div className="flex gap-4">
+                      <FormField
+                        control={editForm.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem className="w-full">
+                            <FormLabel>Name</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="text"
+                                defaultValue={selected?.name}
+                                placeholder="Name"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={editForm.control}
+                        name="multiplier"
+                        render={({ field }) => (
+                          <FormItem className="w-full">
+                            <FormLabel>Quantity</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                defaultValue={selected?.multiplier}
+                                placeholder="Multiplier..."
+                                {...field}
+                                // value={field.value ? Number(field.value) : ""}
+                                onChange={(e) =>
+                                  field.onChange(Number(e.target.value))
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={editForm.control}
+                        name="price"
+                        render={({ field }) => (
+                          <FormItem className="w-full">
+                            <FormLabel>Price</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                defaultValue={Number(selected?.price)}
+                                placeholder="Price..."
+                                {...field}
+                                // value={field.value ? Number(field.value) : ""}
+                                onChange={(e) =>
+                                  field.onChange(Number(e.target.value))
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="mt-4">
+                      <FormField
+                        control={editForm.control}
+                        name="strata"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <div className="flex gap-2 items-center">
+                                Strata :
+                                <Input
+                                  type="checkbox"
+                                  className="w-4 h-4"
+                                  checked={selected?.strata}
+                                  defaultChecked={selected?.strata}
+                                  onChange={(e) => {
+                                    field.onChange(e.target.checked);
+                                    //@ts-ignore
+                                    setSelected({
+                                      ...selected,
+                                      strata: e.target.checked,
+                                    });
+                                  }}
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Condition show={!!selected?.strata}>
+                        <FormField
+                          control={editForm.control}
+                          name="strataValue"
+                          render={({ field }) => (
+                            <FormItem className="w-full">
+                              <FormLabel>Strata Value</FormLabel>
+                              <FormControl>
+                                <div>
+                                  {selected?.strataValue &&
+                                  (
+                                    selected.strataValue as {
+                                      price: number;
+                                      quantity: number;
+                                    }[]
+                                  ).length > 0 ? (
+                                    (
+                                      selected.strataValue as unknown as StrataValue[]
+                                    ).map(
+                                      (strata: StrataValue, index: number) => (
+                                        <div
+                                          key={index}
+                                          className="flex gap-2 items-end mb-2"
+                                        >
+                                          <div className="w-full">
+                                            <FormLabel>Quantity :</FormLabel>
+                                            <Input
+                                              type="number"
+                                              placeholder="Quantity"
+                                              value={strata.quantity}
+                                              onChange={(e) => {
+                                                if (
+                                                  Array.isArray(
+                                                    selected.strataValue
+                                                  )
+                                                ) {
+                                                  const newValue = [
+                                                    ...selected.strataValue,
+                                                  ];
+                                                  //@ts-ignore
+                                                  newValue[index].quantity =
+                                                    Number(e.target.value);
+                                                  setSelected({
+                                                    ...selected,
+                                                    strataValue: newValue,
+                                                  });
+                                                }
+                                              }}
+                                            />
+                                          </div>
+                                          <div className="w-full">
+                                            <FormLabel>Price :</FormLabel>
+                                            <Input
+                                              type="number"
+                                              placeholder="Price"
+                                              value={strata.price}
+                                              onChange={(e) => {
+                                                if (
+                                                  Array.isArray(
+                                                    selected.strataValue
+                                                  )
+                                                ) {
+                                                  const newValue = [
+                                                    ...selected.strataValue,
+                                                  ];
+                                                  //@ts-ignore
+                                                  newValue[index].price =
+                                                    Number(e.target.value);
+                                                  setSelected({
+                                                    ...selected,
+                                                    strataValue: newValue,
+                                                  });
+                                                }
+                                              }}
+                                            />
+                                          </div>
+                                          <Button
+                                            type="button"
+                                            onClick={() => {
+                                              if (Array.isArray(field.value)) {
+                                                const newValue =
+                                                  //@ts-ignore
+                                                  selected.strataValue.filter(
+                                                    (_: any, i: number) =>
+                                                      i !== index
+                                                  );
+                                                setSelected({
+                                                  ...selected,
+                                                  strataValue: newValue,
+                                                });
+                                              }
+                                            }}
+                                          >
+                                            Remove
+                                          </Button>
+                                        </div>
+                                      )
+                                    )
+                                  ) : (
+                                    <p>No strata values added</p>
+                                  )}
+                                  <Button
+                                    type="button"
+                                    onClick={() => {
+                                      const newValue = [
+                                        ...((selected?.strataValue as unknown as StrataValue[]) ||
+                                          []),
+                                        { quantity: 0, price: 0 },
+                                      ];
+                                      //@ts-ignore
+                                      setSelected({
+                                        ...selected,
+                                        strataValue:
+                                          newValue as unknown as Prisma.JsonValue,
+                                      });
+                                    }}
+                                  >
+                                    Add Strata
+                                  </Button>
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </Condition>
+                    </div>
+                    <div className="w-full flex justify-end">
+                      <Button
+                        type="reset"
+                        className="flex gap-2 mr-4"
+                        variant={"outline"}
+                        onClick={() => {
+                          setEdit(false);
+                          setSelected(null);
+                        }}
+                      >
+                        <X size={16} />
+                        Cancel
+                      </Button>
+                      <Button type="submit" className="flex gap-2">
+                        <Save size={16} />
+                        Save
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </div>
+            </Condition>
           </Condition>
           <Condition show={!add && !edit}>
             <Table>
@@ -310,6 +663,7 @@ function UnitForm({ id }: { id: string }) {
                 <TableRow>
                   <TableCell>Name</TableCell>
                   <TableCell>Multiplier</TableCell>
+                  <TableCell>Price</TableCell>
                   <TableCell className="text-center">Actions</TableCell>
                 </TableRow>
               </TableHeader>
@@ -318,6 +672,7 @@ function UnitForm({ id }: { id: string }) {
                   <TableRow key={item.satuan_id}>
                     <TableCell className="capitalize">{item.name}</TableCell>
                     <TableCell>{item.multiplier}</TableCell>
+                    <TableCell>{item.price}</TableCell>
                     <TableCell className="flex gap-2 items-center justify-center">
                       <Button
                         size="xs"

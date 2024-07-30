@@ -30,7 +30,7 @@ const CheckerForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   // Query functiono
   const queryClient = useQueryClient();
   const userMutation = useMutation({
-    mutationFn: async (values: User) => await addChecker(values),
+    mutationFn: async (values: User) => await addChecker(values, "CHECKER"),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       router.refresh();

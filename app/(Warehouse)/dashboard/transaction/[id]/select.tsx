@@ -44,7 +44,9 @@ export const CustomerSelect = ({
           className="w-[200px] justify-start p-0 h-auto text-left capitalize"
         >
           {value
-            ? data.find((customer) => customer === value)?.name
+            ? data.find(
+                (customer) => customer.customer_id === value.customer_id,
+              )?.name
             : "Select Customer..."}
         </Button>
       </PopoverTrigger>

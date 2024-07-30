@@ -10,6 +10,7 @@ export const getProducts = async () => {
         stock: {
           include: {
             warehouse: true,
+            unit: true,
           },
         },
         Satuan: true,

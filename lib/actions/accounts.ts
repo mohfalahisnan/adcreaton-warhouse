@@ -154,7 +154,7 @@ export const addUser = async (data: Prisma.UserCreateInput) => {
     throw new Error();
   }
 };
-export const addChecker = async (data: Prisma.UserCreateInput) => {
+export const addChecker = async (data: Prisma.UserCreateInput, role: Role) => {
   if (!data.password) return null;
   const hashedPassword = await hashPassword(data.password);
   try {
@@ -162,7 +162,7 @@ export const addChecker = async (data: Prisma.UserCreateInput) => {
       data: {
         ...data,
         password: hashedPassword,
-        role: "CHECKER",
+        role: role,
       },
     });
     return user;

@@ -1,5 +1,11 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import React from "react";
+import Pembayaran from "./pembayaran";
+import { PesananDailyChart } from "./chart/pesananweekchart";
+import { PengeluaranDailyChart } from "./chart/pengeluaran";
+import { BarangKeluarDailyChart } from "./chart/barangkeluar";
+import { BarangMasukDailyChart } from "./chart/barangmasuk";
+import { TransferDailyChart } from "./chart/transfer";
 
 const TABS = [
   "pembayaran",
@@ -9,7 +15,6 @@ const TABS = [
   "barangkeluar",
   "retur",
   "transfer",
-  "other",
 ];
 
 const Page = () => {
@@ -25,8 +30,23 @@ const Page = () => {
         </TabsList>
         <TabsContent value="pembayaran">
           <div>
-            <h1>Pembayaran</h1>
+            <Pembayaran />
           </div>
+        </TabsContent>
+        <TabsContent value="pemesanan">
+          <PesananDailyChart />
+        </TabsContent>
+        <TabsContent value="pengeluaran">
+          <PengeluaranDailyChart />
+        </TabsContent>
+        <TabsContent value="barangkeluar">
+          <BarangKeluarDailyChart />
+        </TabsContent>
+        <TabsContent value="barangmasuk">
+          <BarangMasukDailyChart />
+        </TabsContent>
+        <TabsContent value="transfer">
+          <TransferDailyChart />
         </TabsContent>
       </Tabs>
     </div>

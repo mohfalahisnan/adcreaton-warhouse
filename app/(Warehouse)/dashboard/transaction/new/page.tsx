@@ -28,9 +28,11 @@ import { getCustomersWarehouse } from "@/lib/actions/customer";
 import { CustomerSelect, SalesSelect } from "./select";
 import AddOrderItem from "./addOrderItem";
 import { formatRupiah } from "@/lib/formatRupiah";
-import { tierPriceApplied } from "@/lib/tierPriceApplied";
 import { useRouter } from "next/navigation";
-import { CalculateTotalAmount } from "@/lib/CalculateTotalAmount";
+import {
+  CalculateTotalAmount,
+  getApplicablePrice,
+} from "@/lib/CalculateTotalAmount";
 import { ResponsiveDialog } from "@/components/ResponsiveDialog";
 import { Plus } from "lucide-react";
 import CustomerForm from "@/components/CustomerForm";
@@ -144,16 +146,6 @@ function Page() {
         variant: "destructive",
       });
     },
-  });
-
-  const currentOrder = useQuery({
-    queryKey: ["order", orderId],
-    queryFn: async () => {
-      if (orderId) {
-        return await getOrderById(orderId);
-      }
-    },
-    enabled: !!orderId,
   });
 
   useEffect(() => {
@@ -301,29 +293,19 @@ function Page() {
                 <TableCell>{item.quantity}</TableCell>
                 <TableCell>{item.satuan?.name}</TableCell>
                 <TableCell>
-                  Rp.{formatRupiah(item.product.sell_price)}
+                  Rp.{formatRupiah(item.satuan?.price || 0)}
                 </TableCell>
                 <TableCell>
-                  Rp.
-                  {formatRupiah(
-                    item.product.sell_price -
-                      (tierPriceApplied({
-                        ...item.product,
-                        count: item.quantity * (item.satuan?.multiplier || 1),
-                      }) || 0),
-                  )}
+                  Rp.{formatRupiah(getApplicablePrice(item))}
                 </TableCell>
                 <TableCell>Rp.{formatRupiah(item.discount || 0)}</TableCell>
                 <TableCell>
                   Rp.
                   {formatRupiah(
-                    tierPriceApplied({
-                      ...item.product,
-                      count: item.quantity * (item.satuan?.multiplier || 1),
-                    }) *
-                      item.quantity *
-                      (item.satuan?.multiplier || 1) -
-                      (item.discount || 0),
+                    ((item.satuan?.price || 0) -
+                      (item.discount || 0) -
+                      getApplicablePrice(item)) *
+                      item.quantity,
                   )}
                 </TableCell>
               </TableRow>
@@ -340,7 +322,13 @@ function Page() {
               <TableHead colSpan={7} className="text-right">
                 Total
               </TableHead>
-              <TableHead>Rp.{formatRupiah(totalAmount)}</TableHead>
+              <TableHead>
+                Rp.
+                {getOrderItem.data &&
+                  formatRupiah(
+                    CalculateTotalAmount({ data: getOrderItem.data as any }),
+                  )}
+              </TableHead>
             </TableRow>
           </TableHeader>
         </Table>

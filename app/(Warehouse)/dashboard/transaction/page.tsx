@@ -24,13 +24,22 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Plus } from "lucide-react";
+import { Check, CheckCircle2, Plus } from "lucide-react";
 import React, { useState } from "react";
-import { deleteOrder, deleteOrders, getOrder } from "@/lib/actions/order";
+import {
+  cancelOrder,
+  deleteOrder,
+  deleteOrders,
+  getOrder,
+  updateOrderStatus,
+} from "@/lib/actions/order";
 import Link from "next/link";
 import Payment from "./Payment";
-import { inboundCancelOrder } from "@/lib/actions/inbound";
+
 import { useSession } from "next-auth/react";
+import { createShipment } from "@/lib/actions/shipping";
+import { getCars } from "@/lib/actions/car";
+import { useRouter } from "next/navigation";
 export interface TransactionTable
   extends Prisma.OrderGetPayload<{
     include: {
@@ -48,7 +57,11 @@ export interface TransactionTable
 
 const Page = () => {
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
+  const router = useRouter();
   const session = useSession();
+  const [shipmentModal, setShipmentModal] = useState(false);
+  const [cardId, setCardId] = useState<string | null>(null);
+  const [orderId, setOrderId] = useState<string | null>(null);
   const { data } = useQuery({
     queryKey: ["orders"],
     queryFn: async () => await getOrder(parseInt(warehouseId), true),
@@ -89,7 +102,6 @@ const Page = () => {
     mutationFn: async (id: string) => await deleteOrder(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
-
       setOpen(false);
       toast({
         description: (
@@ -115,11 +127,9 @@ const Page = () => {
     },
   });
   const cancelQuery = useMutation({
-    mutationFn: async (data: string) =>
-      await inboundCancelOrder({ order_id: data }),
+    mutationFn: async (data: string) => await cancelOrder(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
-
       setOpenCancel(false);
       toast({
         description: (
@@ -143,6 +153,40 @@ const Page = () => {
         variant: "destructive",
       });
     },
+  });
+  const kirimMutation = useMutation({
+    mutationFn: async (id: string) => {
+      if (!cardId) {
+        toast({
+          title: "Error",
+          description: "Silahkan Pilih mobil terlebih dahulu",
+          variant: "destructive",
+        });
+        return;
+      }
+      await updateOrderStatus(id, "ON_DELEVERY");
+      await createShipment({
+        shippedDate: new Date(),
+        deliveryDate: new Date(),
+        warehouse_id: parseInt(warehouseId),
+        customer_id: 1,
+        note: "",
+        order_id: id,
+        status: "PENDING",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        car_id: cardId,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      setShipmentModal(false);
+      setOrderId(null);
+    },
+  });
+  const cars = useQuery({
+    queryKey: ["cars"],
+    queryFn: async () => await getCars(parseInt(warehouseId)),
   });
   const columnsConfig: ColumnConfig<TransactionTable>[] = [
     {
@@ -187,13 +231,40 @@ const Page = () => {
       renderCell(cellValue, row) {
         return (
           <div className="flex flex-col">
+            {row.status === "SUCCESS" && (
+              <Button
+                size={"xs"}
+                onClick={() =>
+                  router.push(`/dashboard/transaction/sukses/${row.order_id}`)
+                }
+              >
+                {row.status}
+              </Button>
+            )}
             {/* <ChangeStatus id={row.order_id} /> */}
-            {row.status == "ON_DELEVERY" ? (
-              <Button size={"xs"}>{row.status}</Button>
+            {row.status === "ON_DELEVERY" ? (
+              <Button
+                size={"xs"}
+                onClick={() =>
+                  router.push(`/dashboard/transaction/retur/${row.order_id}`)
+                }
+              >
+                ON_DELEVERY
+              </Button>
+            ) : row.status === "PAID" ? (
+              <Button
+                size={"xs"}
+                onClick={() => {
+                  setShipmentModal(true);
+                  setOrderId(row.order_id);
+                }}
+              >
+                Kirim
+              </Button>
             ) : (
               <Button
                 size={"xs"}
-                className={`${row.status == "PENDING" && "bg-orange-500"}`}
+                className={row.status === "SUCCESS" ? "hidden" : ""}
               >
                 {row.status}
               </Button>
@@ -217,17 +288,15 @@ const Page = () => {
   ];
 
   const actionsConfig: ActionConfig<TransactionTable>[] = [
+    // {
+    //   label: "Copy Id",
+    //   onClick: (transaction: TransactionTable) =>
+    //     navigator.clipboard.writeText(transaction.order_id),
+    // },
     {
-      label: "Copy Id",
+      label: "Edit",
       onClick: (transaction: TransactionTable) =>
-        navigator.clipboard.writeText(transaction.order_id),
-    },
-    {
-      label: "Delete",
-      onClick: (transaction: TransactionTable) => {
-        setOpen(true);
-        setSelected(transaction.order_id);
-      },
+        router.push(`/dashboard/transaction/${transaction.order_id}`),
     },
     {
       label: "Cancel",
@@ -242,6 +311,7 @@ const Page = () => {
     columns: columnsConfig,
     actions: actionsConfig,
   });
+
   const handleDelete = (selectedRows: TransactionTable[]) => {
     // Implement your delete logic here
     console.log("Deleted rows:", selectedRows);
@@ -274,6 +344,7 @@ const Page = () => {
         data={data as TransactionTable[]}
         onDelete={handleDelete}
         onPrint={handlePrint}
+        deleteButton={session.data?.user.ROLE === "ADMIN"}
       />
 
       <AlertDialog open={open}>
@@ -325,6 +396,52 @@ const Page = () => {
             <AlertDialogAction
               onClick={() => cancelQuery.mutate(selected || "")}
               className="bg-destructive hover:bg-destructive"
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={shipmentModal}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Kirimkan Pengiriman</AlertDialogTitle>
+            <AlertDialogDescription>
+              Pilih mobil terlebih dahulu
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
+            {cars.data?.map((car) => {
+              return (
+                <Button
+                  key={car.car_id}
+                  onClick={() =>
+                    setCardId(cardId === car.car_id ? null : car.car_id)
+                  }
+                >
+                  {car.nama}
+                  {cardId === car.car_id && (
+                    <Check size={18} className="ml-4" />
+                  )}
+                </Button>
+              );
+            })}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setShipmentModal(false);
+                setSelected(undefined);
+                setOrderId(null);
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => kirimMutation.mutate(orderId || "")}
+              className="bg-destructive hover:bg-destructive"
+              disabled={!cardId}
             >
               Continue
             </AlertDialogAction>

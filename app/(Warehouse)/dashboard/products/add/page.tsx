@@ -14,7 +14,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, Plus, Save, Trash } from "lucide-react";
+import { CheckCircle2, Plus, Save } from "lucide-react";
 import { addProduct } from "@/lib/actions/products";
 import { Product } from "@prisma/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -81,9 +81,9 @@ const ProductForm = () => {
     image: z.string(),
     name: z.string().min(6).max(100),
     description: z.string().min(10).max(1000),
-    sell_price: z.number(),
-    buy_price: z.number(),
-    tier_price: z.string().optional(),
+    // sell_price: z.number(),
+    // buy_price: z.number(),
+    // tier_price: z.string().optional(),
     inputby: z.string(),
     category_id: z.number(),
     // unit: z.string().optional(),
@@ -130,7 +130,7 @@ const ProductForm = () => {
     }
 
     values.inputby = session.data?.user?.name as string;
-    values.tier_price = JSON.stringify(tierPrice);
+    // values.tier_price = JSON.stringify(tierPrice);
     productMutation.mutate(values as Product);
     setIsLoading(false);
   }
@@ -296,136 +296,6 @@ const ProductForm = () => {
                     <FormLabel>Description</FormLabel>
                     <FormControl>
                       <Textarea placeholder="Description" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Field for sell_price */}
-              <FormField
-                control={form.control}
-                name="sell_price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sell Price</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Sell Price"
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value))
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Field for buy_price */}
-              <FormField
-                control={form.control}
-                name="buy_price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Buy Price</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Buy Price"
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value))
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Field for tier_price */}
-              <FormField
-                control={form.control}
-                name="tier_price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tier Price</FormLabel>
-                    <FormControl>
-                      <div>
-                        <div>
-                          {tierPrice && (
-                            <div className="grid grid-cols-4 gap-2">
-                              <span className="text-sm">From</span>
-                              <span className="text-sm">To</span>
-                              <span className="text-sm">Price</span>
-                            </div>
-                          )}
-                          {tierPrice?.map((_, i) => {
-                            return (
-                              <div
-                                className="grid grid-cols-4 gap-2 mb-2"
-                                key={i}
-                              >
-                                <Input
-                                  type="number"
-                                  placeholder="0"
-                                  onChange={(e) =>
-                                    handleTierChange(
-                                      i,
-                                      "from",
-                                      parseInt(e.target.value),
-                                    )
-                                  }
-                                />
-                                <Input
-                                  type="number"
-                                  placeholder="100"
-                                  onChange={(e) =>
-                                    handleTierChange(
-                                      i,
-                                      "to",
-                                      parseInt(e.target.value),
-                                    )
-                                  }
-                                />
-
-                                <div className="flex justify-between gap-2 col-span-2">
-                                  <Input
-                                    type="number"
-                                    placeholder="Price"
-                                    onChange={(e) =>
-                                      handleTierChange(
-                                        i,
-                                        "price",
-                                        parseInt(e.target.value),
-                                      )
-                                    }
-                                    className="w-full flex-1"
-                                  />
-                                  <Button
-                                    type="button"
-                                    size={"icon"}
-                                    variant={"outline"}
-                                    onClick={() => deleteTierPrice(i)}
-                                  >
-                                    <Trash size={16} />
-                                  </Button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                        <Button
-                          type="button"
-                          onClick={addTierPrice}
-                          variant={"outline"}
-                          className="mt-4 w-full flex gap-2"
-                        >
-                          <Plus size={14} />
-                          Add Tier Price
-                        </Button>
-                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
