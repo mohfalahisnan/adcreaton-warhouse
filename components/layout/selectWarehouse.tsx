@@ -12,8 +12,11 @@ function SelectWarehouse({ name, email }: { name: string; email: string }) {
     queryFn: async () => await getRoleByEmail(email),
   });
   useEffect(() => {
-    setWarehouseId(userRole.data?.warehouse_id?.toString() || "");
-  }, [userRole.data]);
+    if (userRole.data?.warehouse_id) {
+      setWarehouseId(userRole.data.warehouse_id.toString());
+    }
+    setWarehouseId(userRole.data?.warehouse_id?.toString() || "1");
+  }, [userRole.data, userRole.data?.warehouse_id]);
   if (!userRole.data) return null;
   return (
     <Button

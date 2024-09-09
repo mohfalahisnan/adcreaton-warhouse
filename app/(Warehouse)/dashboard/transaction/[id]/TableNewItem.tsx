@@ -32,7 +32,7 @@ const TableNewItem = ({
 }) => {
   const [warehouseId] = useLocalStorage("warehouse_id", "1");
   const session = useSession();
-  const productQuery = useGetProducts({});
+  const productQuery = useGetProducts({ warehouseId: parseFloat(warehouseId) });
   const [product, setProduct] = useState<string>();
   const [satuan, setSatuan] = useState<string>();
   const [qty, setQty] = useState(0);
@@ -93,6 +93,7 @@ const TableNewItem = ({
       discount: potongan,
       notes: "",
       order_id: orderId,
+      finalOrderFinal_order_id: null,
     });
   };
 

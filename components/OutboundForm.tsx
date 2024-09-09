@@ -49,13 +49,13 @@ function OutboundForm() {
   const { data: user } = useSession();
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
   const [selected, setSelected] = useState<Product | undefined>();
-  const { data } = useGetProducts({});
+  const { data } = useGetProducts({ warehouseId: parseFloat(warehouseId) });
 
   const unit = useQuery({
     queryKey: ["unit", selected?.product_id],
     queryFn: async () => {
       if (selected) {
-        return await getUnit(selected.product_id);
+        return await getUnit(selected.product_id, parseFloat(warehouseId));
       }
       throw new Error("No product selected");
     },
