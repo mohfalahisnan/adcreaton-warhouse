@@ -18,6 +18,7 @@ import WebDescForm from "@/components/WebDescForm";
 import TableCategory from "../category/TableCategory";
 import UserSetting from "@/components/UserSetting";
 import CheckerSetting from "@/components/CheckerSetting";
+import ApprovalSetting from "@/components/ApprovalSetting";
 
 type Props = {};
 
@@ -110,6 +111,22 @@ const Page = (props: Props) => {
             <DialogHeader>
               <DialogDescription className="text-foreground">
                 <UserSetting />
+              </DialogDescription>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>
+              <Cog size={18} className="mr-2" />
+              Approval
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogDescription className="text-foreground">
+                <ApprovalSetting />
               </DialogDescription>
             </DialogHeader>
           </DialogContent>

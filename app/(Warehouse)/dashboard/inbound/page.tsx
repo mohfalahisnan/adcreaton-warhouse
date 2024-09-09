@@ -33,6 +33,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { queryClient } from "@/components/provider";
 import Condition from "@/components/Condition";
+import { useSession } from "next-auth/react";
+import { getRoleByEmail } from "@/lib/actions/accounts";
 
 const StockCell = ({ total, Satuan }: { total: number; Satuan: Satuan[] }) => {
   const [stockInUnits, setStockInUnits] = useState<{ [key: string]: number }>(
@@ -65,13 +67,15 @@ const StockCell = ({ total, Satuan }: { total: number; Satuan: Satuan[] }) => {
 
 interface IInbound extends Inbound {
   product: Product | null;
+  satuan: Satuan | null;
 }
 
 const Page = () => {
+  const session = useSession();
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
   const { data } = useQuery({
     queryKey: ["inbound"],
-    queryFn: async () => await getInbound(Number(warehouseId)),
+    queryFn: async () => await getInbound(parseInt(warehouseId)),
   });
   const reject = useMutation({
     mutationFn: async (id: string) => await rejectInbound(id),
@@ -102,6 +106,14 @@ const Page = () => {
   const [open, setOpen] = useState(false);
   const [openAdd, setOpenAdd] = useState(false);
   const [selected, setSelected] = useState<string>();
+
+  const userRole = useQuery({
+    queryKey: ["role"],
+    queryFn: async () => await getRoleByEmail(session.data?.user.email || ""),
+    enabled: !!session.data?.user.email,
+  });
+  if (!userRole.data) return null;
+  if (!session || !session.data) return null;
   //   const deleteQuery = useMutation({
   //     mutationFn: async (id: number) => await deleteCustomer(id),
   //     onSuccess: () => {
@@ -169,6 +181,13 @@ const Page = () => {
     {
       accessorKey: "quantity",
       title: "Quantity",
+      renderCell(cellValue, row) {
+        return (
+          <div>
+            {cellValue} {row.satuan?.name}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "notes",
@@ -185,19 +204,24 @@ const Page = () => {
       renderCell(cellValue, row) {
         return (
           <div>
-            {row.confirmBy === null
-              ? "no status"
-              : row.confirm
-                ? "Approved"
-                : "Rejected"}
+            {!row.confirm && row.confirmBy !== null && "Rejected"}
+            {!row.confirm && row.confirmBy === null && "No Status"}
+            {row.confirm && "Approved"}
             <br />
             {row.confirmBy && `Confirm by : ${row.confirmBy}`}
             <br />
-            <Condition show={row.confirmBy === null}>
+            <Condition
+              show={
+                row.confirmBy === null ||
+                session.data.user.ROLE === "ADMIN" ||
+                session.data.user.ROLE === "APPROVAL"
+              }
+            >
               <div className="flex">
                 <Button
                   size={"xs"}
                   className="mr-2"
+                  disabled={userRole.data?.role !== "APPROVAL"}
                   onClick={() => approve.mutate(row.inbound_id)}
                 >
                   Approve
@@ -205,6 +229,7 @@ const Page = () => {
                 <Button
                   size={"xs"}
                   variant={"outline"}
+                  disabled={userRole.data?.role !== "APPROVAL"}
                   onClick={() => reject.mutate(row.inbound_id)}
                 >
                   Reject
@@ -255,7 +280,7 @@ const Page = () => {
   if (!data) return null;
   return (
     <div>
-      <InboundForm />
+      {userRole.data.role !== "CHECKER" && <InboundForm />}
       <DataTable
         columns={columns}
         data={data}

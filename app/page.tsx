@@ -9,9 +9,11 @@ const Home = async ({
   searchParams: { [key: string]: string | string[] | undefined };
 }) => {
   const session = await auth();
+  console.log(session);
   if (session && session.user) {
     return redirect("/dashboard");
   }
+
   return (
     <div>
       <LoginPage searchParams={searchParams} />

@@ -49,13 +49,13 @@ function InboundForm() {
   const { data: user } = useSession();
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
   const [selected, setSelected] = useState<Product | undefined>();
-  const { data } = useGetProducts({});
+  const { data } = useGetProducts({ warehouseId: parseFloat(warehouseId) });
 
   const unit = useQuery({
     queryKey: ["unit", selected?.product_id],
     queryFn: async () => {
       if (selected) {
-        return await getUnit(selected.product_id);
+        return await getUnit(selected.product_id, parseFloat(warehouseId));
       }
       throw new Error("No product selected");
     },
@@ -83,10 +83,12 @@ function InboundForm() {
     quantity: z.number(),
     notes: z.string(),
     unit: z.string(),
+    price: z.number(),
     inputBy: z.string().optional(),
     product_id: z.string().optional(),
     product_name: z.string().optional(),
     warehouse_id: z.string().optional(),
+    satuan_id: z.string().optional(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -95,11 +97,13 @@ function InboundForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    values.quantity = Number(values.quantity) * Number(values.unit);
+    values.quantity = Number(values.quantity);
     values.inputBy = user?.user?.name || "";
     values.product_id = selected?.product_id || "";
     values.warehouse_id = warehouseId;
     values.product_name = selected?.name || "";
+    values.price = values.price;
+    values.satuan_id = values.unit;
 
     inboundMutation.mutate(
       values as unknown as Inbound & { product_name: string }
@@ -139,7 +143,7 @@ function InboundForm() {
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-4"
               >
-                <div className="flex gap-4">
+                <div className="w-full flex gap-4">
                   <FormField
                     control={form.control}
                     name="quantity"
@@ -165,7 +169,7 @@ function InboundForm() {
                     control={form.control}
                     name="unit"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="w-full">
                         <FormLabel>Unit</FormLabel>
                         <Select
                           onValueChange={field.onChange}
@@ -179,7 +183,7 @@ function InboundForm() {
                           <SelectContent>
                             {unit.data?.map((item, i) => (
                               <SelectItem
-                                value={JSON.stringify(item.multiplier)}
+                                value={JSON.stringify(item.satuan_id)}
                                 key={i}
                                 className="capitalize"
                               >
@@ -188,6 +192,27 @@ function InboundForm() {
                             ))}
                           </SelectContent>
                         </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="price"
+                    render={({ field }) => (
+                      <FormItem className="w-full">
+                        <FormLabel>Price</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="price..."
+                            {...field}
+                            value={field.value ? Number(field.value) : ""}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value))
+                            }
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}

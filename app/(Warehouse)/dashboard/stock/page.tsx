@@ -25,6 +25,10 @@ import { ProductWithStock } from "@/interface";
 import { Satuan } from "@prisma/client";
 import { convertTotalStockToUnits } from "@/lib/stockInUnit";
 import UnitForm from "@/components/UnitForm";
+import { formatRupiah } from "@/lib/formatRupiah";
+import { useSession } from "next-auth/react";
+import { useQuery } from "@tanstack/react-query";
+import { getRoleByEmail } from "@/lib/actions/accounts";
 
 const StockCell = ({ total, Satuan }: { total: number; Satuan: Satuan[] }) => {
   const [stockInUnits, setStockInUnits] = useState<{ [key: string]: number }>(
@@ -57,10 +61,17 @@ const StockCell = ({ total, Satuan }: { total: number; Satuan: Satuan[] }) => {
 
 const Page = () => {
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
-  const { data } = useGetProducts({});
+  const { data } = useGetProducts({ warehouseId: parseFloat(warehouseId) });
   const [open, setOpen] = useState(false);
   const [openAdd, setOpenAdd] = useState(false);
   const [selected, setSelected] = useState<string>();
+  const session = useSession();
+  const userRole = useQuery({
+    queryKey: ["role"],
+    queryFn: async () => await getRoleByEmail(session.data?.user.email || ""),
+    enabled: !!session.data?.user.email,
+  });
+  if (!userRole.data) return null;
   const columnsConfig: ColumnConfig<ProductWithStock>[] = [
     {
       accessorKey: "name",
@@ -71,16 +82,11 @@ const Page = () => {
       title: "Stock",
       renderCell: (cellValue, row) => (
         <>
-          {row.stock.map((item, i) => {
-            if (warehouseId === item.warehouse_id.toString()) {
-              return (
-                <h3 key={i}>
-                  Total: {item.total}
-                  <StockCell key={i} total={item.total} Satuan={row.Satuan} />
-                </h3>
-              );
-            }
-          })}
+          {row.Satuan.map((item, index) => (
+            <h3 key={index}>
+              {item.total} {item.name}
+            </h3>
+          ))}
         </>
       ),
     },
@@ -91,7 +97,7 @@ const Page = () => {
         <ul>
           {cellValue.map((item: Satuan, index: number) => (
             <li key={index} className="text-xs">
-              {item.name}({item.multiplier})
+              {item.name} : Rp.{formatRupiah(item.price)}
             </li>
           ))}
         </ul>
@@ -101,7 +107,13 @@ const Page = () => {
       accessorKey: "Satuan",
       title: "Action",
       renderCell(cellValue, row) {
-        return <UnitForm id={row.product_id} />;
+        return (
+          <div>
+            {userRole.data?.role !== "CHECKER" && (
+              <UnitForm id={row.product_id} />
+            )}
+          </div>
+        );
       },
     },
   ];
@@ -137,6 +149,7 @@ const Page = () => {
     console.log("Edited rows:", selectedRows);
   };
   if (!data) return null;
+  // const filteredProducts = data.filter(product => product.Satuan && product.Satuan.length > 0);
   return (
     <div>
       <DataTable
@@ -145,6 +158,7 @@ const Page = () => {
         onDelete={handleDelete}
         onPrint={handlePrint}
         printButton={false}
+        deleteButton={userRole.data.role !== "CHECKER"}
       />
       <AlertDialog open={open}>
         <AlertDialogContent>

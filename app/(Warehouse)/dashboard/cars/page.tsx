@@ -1,7 +1,6 @@
 "use client";
 import { CheckCircle2, Plus } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import {
@@ -30,6 +29,9 @@ import { useLocalStorage } from "@/hook/useLocalstorage";
 import { deleteCar, getCars } from "@/lib/actions/car";
 import { ResponsiveDialog } from "@/components/ResponsiveDialog";
 import CarForm from "@/components/CarForm";
+import CarFormEdit from "@/components/CarFormEdit";
+import { getRoleByEmail } from "@/lib/actions/accounts";
+import { useSession } from "next-auth/react";
 
 export default function Dashboard() {
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
@@ -68,6 +70,13 @@ export default function Dashboard() {
       });
     },
   });
+  const session = useSession();
+  const userRole = useQuery({
+    queryKey: ["role"],
+    queryFn: async () => await getRoleByEmail(session.data?.user.email || ""),
+    enabled: !!session.data?.user.email,
+  });
+  if (!userRole.data) return null;
   const handleDelete = (id: string) => {
     deleteQuery.mutate(id);
   };
@@ -77,23 +86,25 @@ export default function Dashboard() {
     <main>
       <div className="mb-4">
         <div className="flex justify-end items-center">
-          <div className="flex gap-2">
-            <ResponsiveDialog
-              title="Add Car"
-              description=""
-              triggerContent={
-                <Button size={"sm"} className="flex items-center gap-2">
-                  <Plus size={12} /> Car
-                </Button>
-              }
-              open={open1}
-              onOpenChange={setOpen1}
-            >
-              <div className="max-h-[70vh] overflow-auto">
-                <CarForm onSuccess={() => setOpen1(false)} />
-              </div>
-            </ResponsiveDialog>
-          </div>
+          {userRole.data.role !== "CHECKER" && (
+            <div className="flex gap-2">
+              <ResponsiveDialog
+                title="Add Car"
+                description=""
+                triggerContent={
+                  <Button size={"sm"} className="flex items-center gap-2">
+                    <Plus size={12} /> Car
+                  </Button>
+                }
+                open={open1}
+                onOpenChange={setOpen1}
+              >
+                <div className="max-h-[70vh] overflow-auto">
+                  <CarForm onSuccess={() => setOpen1(false)} />
+                </div>
+              </ResponsiveDialog>
+            </div>
+          )}
         </div>
       </div>
 
@@ -104,7 +115,7 @@ export default function Dashboard() {
             <TableHead className="hidden sm:table-cell">Catatan</TableHead>
             <TableHead className="hidden md:table-cell">Kelengkapan</TableHead>
             <TableHead className="hidden md:table-cell">Note</TableHead>
-            <TableHead className="text-center">Status</TableHead>
+            {/* <TableHead className="text-center">Status</TableHead> */}
             <TableHead></TableHead>
           </TableRow>
         </TableHeader>
@@ -134,7 +145,7 @@ export default function Dashboard() {
                 <TableCell className="hidden md:table-cell">
                   {item.note || "-"}
                 </TableCell>
-                <TableCell className="text-center">
+                {/* <TableCell className="text-center">
                   {item.available ? (
                     <Badge className="text-xs" variant="success">
                       Available
@@ -144,18 +155,41 @@ export default function Dashboard() {
                       UnAvailable
                     </Badge>
                   )}
-                </TableCell>
-                <TableCell>
+                </TableCell> */}
+                <TableCell className="flex gap-2">
                   <Button
                     onClick={() => {
                       setSelected(item.car_id);
                       setOpen(true);
                     }}
+                    disabled={userRole.data?.role === "CHECKER"}
                     size={"xs"}
                     variant={"destructive"}
                   >
                     Delete
                   </Button>
+                  <ResponsiveDialog
+                    title="Add Car"
+                    description=""
+                    triggerContent={
+                      <Button
+                        size={"xs"}
+                        disabled={userRole.data?.role === "CHECKER"}
+                        className="flex items-center gap-2"
+                      >
+                        Edit
+                      </Button>
+                    }
+                    open={open1}
+                    onOpenChange={setOpen1}
+                  >
+                    <div className="max-h-[70vh] overflow-auto">
+                      <CarFormEdit
+                        onSuccess={() => setOpen1(false)}
+                        id={item.car_id}
+                      />
+                    </div>
+                  </ResponsiveDialog>
                 </TableCell>
               </TableRow>
             );

@@ -87,6 +87,8 @@ function OutboundForm() {
     product_id: z.string().optional(),
     warehouse_id: z.string().optional(),
     product_name: z.string().optional(),
+    satuan_id: z.string().optional(),
+    price: z.number(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -95,11 +97,12 @@ function OutboundForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    values.quantity = Number(values.quantity) * Number(values.unit);
+    values.quantity = Number(values.quantity);
     values.inputBy = user?.user?.name || "";
     values.product_id = selected?.product_id || "";
     values.product_name = selected?.name || "";
     values.warehouse_id = warehouseId;
+    values.satuan_id = values.unit;
 
     OutboundMutation.mutate(
       values as unknown as Outbound & { product_name: string }
@@ -166,7 +169,7 @@ function OutboundForm() {
                       control={form.control}
                       name="unit"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="w-full">
                           <FormLabel>Unit</FormLabel>
                           <Select
                             onValueChange={field.onChange}
@@ -180,7 +183,7 @@ function OutboundForm() {
                             <SelectContent>
                               {unit.data?.map((item, i) => (
                                 <SelectItem
-                                  value={JSON.stringify(item.multiplier)}
+                                  value={JSON.stringify(item.satuan_id)}
                                   key={i}
                                   className="capitalize"
                                 >
@@ -189,6 +192,27 @@ function OutboundForm() {
                               ))}
                             </SelectContent>
                           </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="price"
+                      render={({ field }) => (
+                        <FormItem className="w-full">
+                          <FormLabel>Price</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="Price..."
+                              {...field}
+                              value={field.value ? Number(field.value) : ""}
+                              onChange={(e) =>
+                                field.onChange(Number(e.target.value))
+                              }
+                            />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}

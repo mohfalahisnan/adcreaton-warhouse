@@ -1,3 +1,4 @@
+import { Role } from "@prisma/client";
 import NextAuth, { type DefaultSession } from "next-auth";
 
 declare module "next-auth" {
@@ -8,6 +9,8 @@ declare module "next-auth" {
     user: {
       /** The user's postal address. */
       address: string;
+      ROLE: Role;
+      warehouseId: number;
       /**
        * By default, TypeScript merges new interface properties and overwrites existing ones.
        * In this case, the default session user properties will be overwritten,
@@ -28,6 +31,7 @@ export const { auth, handlers } = NextAuth({
         user: {
           ...session.user,
           address: user.address,
+          // ROLE: Role,
         },
       };
     },

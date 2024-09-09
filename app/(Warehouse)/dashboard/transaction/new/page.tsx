@@ -13,6 +13,7 @@ import { useLocalStorage } from "@/hook/useLocalstorage";
 import { getSales } from "@/lib/actions/accounts";
 import {
   deleteOrder,
+  deleteOrderItem,
   getOrderById,
   initialOrder,
   updateOrder,
@@ -28,17 +29,21 @@ import { getCustomersWarehouse } from "@/lib/actions/customer";
 import { CustomerSelect, SalesSelect } from "./select";
 import AddOrderItem from "./addOrderItem";
 import { formatRupiah } from "@/lib/formatRupiah";
-import { tierPriceApplied } from "@/lib/tierPriceApplied";
 import { useRouter } from "next/navigation";
-import { CalculateTotalAmount } from "@/lib/CalculateTotalAmount";
+import {
+  CalculateTotalAmount,
+  getApplicablePrice,
+} from "@/lib/CalculateTotalAmount";
 import { ResponsiveDialog } from "@/components/ResponsiveDialog";
 import { Plus } from "lucide-react";
 import CustomerForm from "@/components/CustomerForm";
+import { queryClient } from "@/components/provider";
+import EditOrderItem from "./editOrderItem";
 
 function Page() {
   //state
   const navigation = useRouter();
-  const [warehouseId] = useLocalStorage("warehouse_id", "1");
+  const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
   const [storedSales, setStoredSales] = useLocalStorage("sales_id", "");
   const [salesId, setSalesId] = useState<string>();
   const [customerId, setCustomerId] = useState<Customer>();
@@ -47,9 +52,17 @@ function Page() {
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [openAdd, setOpenAdd] = useState(false);
   //query
+
   const warhouse = useQuery({
     queryKey: ["warehouse", warehouseId],
-    queryFn: () => getWarehouse({ warehouse_id: parseInt(warehouseId) }),
+    queryFn: async () => {
+      // Hanya jalankan query jika warehouseId ada
+      if (warehouseId) {
+        return await getWarehouse({ warehouse_id: parseInt(warehouseId) });
+      }
+      return null; // Atau bisa throw error atau kembalikan default value
+    },
+    staleTime: 5 * 60 * 1000, // Optional: mengatur waktu sebelum query menjadi stale
   });
   const queryGetSales = useQuery({
     queryKey: ["sales"],
@@ -81,6 +94,26 @@ function Page() {
     onSuccess: (data) => {
       setOrderId(data?.order_id);
       setOrderCode(data?.order_code);
+    },
+    onError(error) {
+      toast({
+        title: `Error: ${error.message}`,
+        description: `${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+  const queryDeleteItem = useMutation({
+    mutationFn: async (id: string) => {
+      return await deleteOrderItem(id);
+    },
+    onSuccess: () => {
+      toast({
+        title: `Success`,
+        description: `item deleted`,
+        variant: "default",
+      });
+      queryClient.invalidateQueries();
     },
     onError(error) {
       toast({
@@ -146,15 +179,9 @@ function Page() {
     },
   });
 
-  const currentOrder = useQuery({
-    queryKey: ["order", orderId],
-    queryFn: async () => {
-      if (orderId) {
-        return await getOrderById(orderId);
-      }
-    },
-    enabled: !!orderId,
-  });
+  const itemDelete = (id: string) => {
+    queryDeleteItem.mutate(id);
+  };
 
   useEffect(() => {
     if (salesId) setStoredSales(salesId);
@@ -291,6 +318,7 @@ function Page() {
               <TableHead>Strata</TableHead>
               <TableHead>Potongan</TableHead>
               <TableHead>Total</TableHead>
+              <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -301,46 +329,57 @@ function Page() {
                 <TableCell>{item.quantity}</TableCell>
                 <TableCell>{item.satuan?.name}</TableCell>
                 <TableCell>
-                  Rp.{formatRupiah(item.product.sell_price)}
+                  Rp.{formatRupiah(item.satuan?.price || 0)}
                 </TableCell>
                 <TableCell>
-                  Rp.
-                  {formatRupiah(
-                    item.product.sell_price -
-                      (tierPriceApplied({
-                        ...item.product,
-                        count: item.quantity * (item.satuan?.multiplier || 1),
-                      }) || 0),
-                  )}
+                  Rp.{formatRupiah(getApplicablePrice(item))}
                 </TableCell>
                 <TableCell>Rp.{formatRupiah(item.discount || 0)}</TableCell>
                 <TableCell>
                   Rp.
                   {formatRupiah(
-                    tierPriceApplied({
-                      ...item.product,
-                      count: item.quantity * (item.satuan?.multiplier || 1),
-                    }) *
-                      item.quantity *
-                      (item.satuan?.multiplier || 1) -
-                      (item.discount || 0),
+                    ((item.satuan?.price || 0) -
+                      (item.discount || 0) -
+                      getApplicablePrice(item)) *
+                      item.quantity,
                   )}
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <EditOrderItem
+                      orderId={item.order_id || ""}
+                      orderItemId={item.order_item_id}
+                    />
+                    <Button
+                      onClick={() => itemDelete(item.order_item_id)}
+                      size={"xs"}
+                      variant={"destructive"}
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
 
             <TableRow>
-              <TableCell colSpan={8} className="text-center">
+              <TableCell colSpan={9} className="text-center">
                 <AddOrderItem orderId={orderId || ""} />
               </TableCell>
             </TableRow>
           </TableBody>
           <TableHeader className="bg-accent">
             <TableRow>
-              <TableHead colSpan={7} className="text-right">
+              <TableHead colSpan={8} className="text-right">
                 Total
               </TableHead>
-              <TableHead>Rp.{formatRupiah(totalAmount)}</TableHead>
+              <TableHead>
+                Rp.
+                {getOrderItem.data &&
+                  formatRupiah(
+                    CalculateTotalAmount({ data: getOrderItem.data as any }),
+                  )}
+              </TableHead>
             </TableRow>
           </TableHeader>
         </Table>

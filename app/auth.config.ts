@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 // Extend the User type to include 'role'
 interface ExtendedUser extends User {
   role?: string;
+  warehouseId?: number;
 }
 
 export const authConfig = {
@@ -19,6 +20,7 @@ export const authConfig = {
           where: { email: user.email || "" },
         });
         token.role = dbUser?.role;
+        token.warehouseId = dbUser?.warehouse_id;
       }
       return token;
     },
@@ -26,6 +28,8 @@ export const authConfig = {
       // Menambahkan role ke dalam sesi
       if (token) {
         (session.user as ExtendedUser).role = token.role as string;
+        (session.user as ExtendedUser).warehouseId =
+          token.warehouseId as number;
       }
       return session;
     },

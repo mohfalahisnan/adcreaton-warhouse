@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Check } from "lucide-react";
 import { useState } from "react";
+import { useLocalStorage } from "@/hook/useLocalstorage";
 
 export const CustomerSelect = ({
   data,
@@ -157,13 +158,17 @@ export const SatuanSelect = ({
   value: string;
   setValue: React.Dispatch<React.SetStateAction<string | undefined>>;
 }) => {
+  const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
+  const satt = data.filter(
+    (item) => item.warehouseWarehouse_id === parseFloat(warehouseId),
+  );
   return (
     <Select value={value} onValueChange={setValue}>
       <SelectTrigger>
         <SelectValue placeholder="select unit" className="capitalize" />
       </SelectTrigger>
       <SelectContent>
-        {data.map((satuan) => (
+        {satt.map((satuan) => (
           <SelectItem
             key={satuan.satuan_id}
             value={satuan.satuan_id.toString()}
@@ -186,7 +191,10 @@ export const SalesSelect = ({
   setValue: React.Dispatch<React.SetStateAction<string | undefined>>;
 }) => {
   const [open, setOpen] = useState(false);
-
+  // const userExist = data.some((user) => user.user_id === value) ? value : "";
+  // useEffect(() => {
+  //   setValue(userExist);
+  // }, []);
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -211,7 +219,7 @@ export const SalesSelect = ({
                 data.map((sales) => (
                   <CommandItem
                     key={sales.user_id}
-                    value={sales.name}
+                    value={sales.user_id}
                     onSelect={(currentValue) => {
                       setValue(currentValue === value ? "" : currentValue);
                       setOpen(false);

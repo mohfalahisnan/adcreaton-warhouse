@@ -8,12 +8,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useLocalStorage } from "@/hook/useLocalstorage";
+import { getApplicablePrice } from "@/lib/CalculateTotalAmount";
 import { getOrdersByIds } from "@/lib/actions/order";
 import { getSetting } from "@/lib/actions/setting";
 import { getWarehouse } from "@/lib/actions/warehouse";
 import { formatDate } from "@/lib/formatDate";
 import { formatRupiah } from "@/lib/formatRupiah";
-import { tierPriceApplied } from "@/lib/tierPriceApplied";
 import { useQuery } from "@tanstack/react-query";
 import React, { useEffect, useState } from "react";
 
@@ -122,30 +122,19 @@ const Invoice = ({ params }: { params: { id: string } }) => {
                     <TableCell>{item.quantity}</TableCell>
                     <TableCell>{item.satuan?.name}</TableCell>
                     <TableCell>
-                      Rp.{formatRupiah(item.product.sell_price)}
+                      Rp.{formatRupiah(item.satuan?.price || 0)}
                     </TableCell>
                     <TableCell>
-                      Rp.
-                      {formatRupiah(
-                        item.product.sell_price -
-                          (tierPriceApplied({
-                            ...item.product,
-                            count:
-                              item.quantity * (item.satuan?.multiplier || 1),
-                          }) || 0),
-                      )}
+                      Rp.{formatRupiah(getApplicablePrice(item))}
                     </TableCell>
                     <TableCell>Rp.{formatRupiah(item.discount || 0)}</TableCell>
                     <TableCell>
                       Rp.
                       {formatRupiah(
-                        tierPriceApplied({
-                          ...item.product,
-                          count: item.quantity * (item.satuan?.multiplier || 1),
-                        }) *
-                          item.quantity *
-                          (item.satuan?.multiplier || 1) -
-                          (item.discount || 0),
+                        ((item.satuan?.price || 0) -
+                          (item.discount || 0) -
+                          getApplicablePrice(item)) *
+                          item.quantity,
                       )}
                     </TableCell>
                   </TableRow>

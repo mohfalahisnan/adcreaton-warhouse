@@ -28,6 +28,34 @@ export const addCar = async (data: Prisma.CarCreateInput) => {
   }
 };
 
+export const editCar = async (data: Prisma.CarUpdateInput, id: string) => {
+  try {
+    const car = await prisma.car.update({
+      data: data,
+      where: {
+        car_id: id,
+      },
+    });
+    return car;
+  } catch (error) {
+    console.log(error);
+    throw new Error("Failed to fetch");
+  }
+};
+
+export const getCar = async (id: string) => {
+  try {
+    return await prisma.car.findUnique({
+      where: {
+        car_id: id,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    throw new Error("Failed to fetch");
+  }
+};
+
 export const deleteCar = async (id: string) => {
   try {
     return await prisma.car.delete({

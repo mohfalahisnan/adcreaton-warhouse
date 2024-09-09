@@ -97,11 +97,7 @@ const TableNewItem = ({
   };
 
   useEffect(() => {
-    let multiplier =
-      productQuery.data
-        ?.find((item) => item.product_id === product)
-        ?.Satuan.find((unit) => unit.satuan_id === parseFloat(satuan || ""))
-        ?.multiplier || 1;
+    let multiplier = 1;
     if (!product) {
       setError("Product must be selected");
       return;
@@ -166,15 +162,21 @@ const TableNewItem = ({
             <TableCell>
               Rp.
               {formatRupiah(
-                productQuery.data?.find((item) => item.product_id === product)
-                  ?.sell_price || 0,
+                productQuery.data
+                  ?.find((item) => item.product_id === product)
+                  ?.Satuan.find(
+                    (unit) => unit.satuan_id === parseFloat(satuan || ""),
+                  )?.price || 0,
               )}
             </TableCell>
             <TableCell>
               Rp.
               {formatRupiah(
-                (productQuery.data?.find((item) => item.product_id === product)
-                  ?.sell_price || 0) -
+                (productQuery.data
+                  ?.find((item) => item.product_id === product)
+                  ?.Satuan.find(
+                    (unit) => unit.satuan_id === parseFloat(satuan || ""),
+                  )?.price || 0) -
                   (tierPriceApplied({
                     ...(productQuery.data?.find(
                       (item) => item.product_id === product,
@@ -200,25 +202,13 @@ const TableNewItem = ({
             <TableCell>
               Rp.
               {formatRupiah(
-                tierPriceApplied({
-                  ...(productQuery.data?.find(
-                    (item) => item.product_id === product,
-                  ) as unknown as ISelectedProduct),
-                  count:
-                    qty *
-                    (productQuery.data
-                      ?.find((item) => item.product_id === product)
-                      ?.Satuan.find(
-                        (unit) => unit.satuan_id === parseFloat(satuan || ""),
-                      )?.multiplier || 1),
-                }) *
-                  (productQuery.data
-                    ?.find((item) => item.product_id === product)
-                    ?.Satuan.find(
-                      (unit) => unit.satuan_id === parseFloat(satuan || ""),
-                    )?.multiplier || 1) *
-                  qty -
-                  potongan || 0,
+                ((productQuery.data
+                  ?.find((item) => item.product_id === product)
+                  ?.Satuan.find(
+                    (unit) => unit.satuan_id === parseFloat(satuan || ""),
+                  )?.price || 0) -
+                  potongan) *
+                  qty,
               )}
             </TableCell>
           </TableRow>

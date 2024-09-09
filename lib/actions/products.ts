@@ -2,7 +2,7 @@
 import { prisma } from "@/lib/prisma";
 import { Product } from "@prisma/client";
 
-export const getProducts = async () => {
+export const getProducts = async (warehouseId: number) => {
   try {
     const products = await prisma.product.findMany({
       include: {
@@ -10,9 +10,14 @@ export const getProducts = async () => {
         stock: {
           include: {
             warehouse: true,
+            unit: true,
           },
         },
-        Satuan: true,
+        Satuan: {
+          where: {
+            warehouseWarehouse_id: warehouseId,
+          },
+        },
         _count: true,
       },
       take: 500,
@@ -20,6 +25,7 @@ export const getProducts = async () => {
         createdAt: "desc",
       },
     });
+    console.log(products);
     return products;
   } catch (error) {
     throw new Error("Failed to fetch");

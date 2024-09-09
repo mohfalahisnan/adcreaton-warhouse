@@ -1,34 +1,46 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import React from "react";
-
-const TABS = [
-  "pembayaran",
-  "pemesanan",
-  "pengeluaran",
-  "barangmasuk",
-  "barangkeluar",
-  "retur",
-  "transfer",
-  "other",
-];
+import Link from "next/link";
 
 const Page = () => {
   return (
     <div>
-      <Tabs defaultValue="pembayaran">
-        <TabsList>
-          {TABS.map((item, i) => (
-            <TabsTrigger value={item} key={i} className="capitalize">
-              {item}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        <TabsContent value="pembayaran">
-          <div>
-            <h1>Pembayaran</h1>
+      <div className="grid grid-cols-5 gap-8 mb-8">
+        <Link href={"/dashboard/report/finance"}>
+          <div className="w-full py-4 transition-all duration-200 rounded-lg bg-zinc-100 hover:bg-primary hover:text-white flex items-center justify-center text-lg">
+            Keuangan
           </div>
-        </TabsContent>
-      </Tabs>
+        </Link>
+        <Link href={"/dashboard/report/pesanan"}>
+          <div className="w-full py-4 transition-all duration-200 rounded-lg bg-zinc-100 hover:bg-primary hover:text-white flex items-center justify-center text-lg">
+            Pesanan
+          </div>
+        </Link>
+        <Link href={"/dashboard/report/pengeluaran"}>
+          <div className="w-full py-4 transition-all duration-200 rounded-lg bg-zinc-100 hover:bg-primary hover:text-white flex items-center justify-center text-lg">
+            Pengeluaran
+          </div>
+        </Link>
+        <Link href={"/dashboard/report/barangmasuk"}>
+          <div className="w-full py-4 transition-all duration-200 rounded-lg bg-zinc-100 hover:bg-primary hover:text-white flex items-center justify-center text-lg">
+            Barang Masuk
+          </div>
+        </Link>
+        <Link href={"/dashboard/report/barangkeluar"}>
+          <div className="w-full py-4 transition-all duration-200 rounded-lg bg-zinc-100 hover:bg-primary hover:text-white flex items-center justify-center text-lg">
+            Barang Keluar
+          </div>
+        </Link>
+        {/* <Link href={"/dashboard/report/finance"}>
+          <div className="w-full py-4 transition-all duration-200 rounded-lg bg-zinc-100 hover:bg-primary hover:text-white flex items-center justify-center text-lg">
+            Retur
+          </div>
+        </Link> */}
+        <Link href={"/dashboard/report/transfer"}>
+          <div className="w-full py-4 transition-all duration-200 rounded-lg bg-zinc-100 hover:bg-primary hover:text-white flex items-center justify-center text-lg">
+            Transfer
+          </div>
+        </Link>
+      </div>
     </div>
   );
 };
