@@ -25,6 +25,7 @@ export const newStock = async (
 ) => {
   try {
     const stock = await prisma.stock.create({
+      //@ts-ignore
       data: {
         total: total,
         product_id: productId,

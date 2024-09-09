@@ -1,7 +1,9 @@
+//@ts-nocheck
 import { ISelectedProduct, TierPrice } from "./actions/order";
 
 export const tierPriceApplied = (product: ISelectedProduct): number => {
   // Memeriksa apakah product dan tier_price tersedia
+
   if (!product || !product.tier_price) {
     return product ? product.sell_price : 0; // Kembali ke sell_price atau 0 jika product undefined
   }
