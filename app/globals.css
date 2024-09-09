@@ -92,3 +92,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* Untuk browser berbasis WebKit seperti Chrome, Safari, Edge */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    @apply appearance-none;
+  }
+
+  /* Untuk Firefox */
+  input[type="number"] {
+    @apply appearance-none;
+  }
+}

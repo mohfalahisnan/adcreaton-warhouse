@@ -29,9 +29,9 @@ const TableNewItem = ({
   orderId: string;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
-  const [warehouseId] = useLocalStorage("warehouse_id", "1");
+  const [warehouseId] = useLocalStorage("warehouse-id", "1");
   const session = useSession();
-  const productQuery = useGetProducts({});
+  const productQuery = useGetProducts({ warehouseId: parseFloat(warehouseId) });
   const [product, setProduct] = useState<string>();
   const [satuan, setSatuan] = useState<string>();
   const [qty, setQty] = useState(0);

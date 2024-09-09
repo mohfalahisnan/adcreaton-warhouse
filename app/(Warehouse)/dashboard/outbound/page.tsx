@@ -34,6 +34,7 @@ import Condition from "@/components/Condition";
 import { queryClient } from "@/components/provider";
 import { toast } from "@/components/ui/use-toast";
 import { useSession } from "next-auth/react";
+import { getRoleByEmail } from "@/lib/actions/accounts";
 
 const StockCell = ({ total, Satuan }: { total: number; Satuan: Satuan[] }) => {
   const [stockInUnits, setStockInUnits] = useState<{ [key: string]: number }>(
@@ -105,6 +106,12 @@ const Page = () => {
     },
   });
   const session = useSession();
+  const userRole = useQuery({
+    queryKey: ["role"],
+    queryFn: async () => await getRoleByEmail(session.data?.user.email || ""),
+    enabled: !!session.data?.user.email,
+  });
+  if (!userRole.data) return null;
   if (!session || !session.data) return null;
   const columnsConfig: ColumnConfig<IOutbound>[] = [
     {
@@ -154,6 +161,7 @@ const Page = () => {
                 <Button
                   size={"xs"}
                   className="mr-2"
+                  disabled={userRole.data?.role !== "APPROVAL"}
                   onClick={() => approve.mutate(row.outbound_id)}
                 >
                   Approve
@@ -161,6 +169,7 @@ const Page = () => {
                 <Button
                   size={"xs"}
                   variant={"outline"}
+                  disabled={userRole.data?.role !== "APPROVAL"}
                   onClick={() => reject.mutate(row.outbound_id)}
                 >
                   Reject
@@ -211,7 +220,7 @@ const Page = () => {
   if (!data) return null;
   return (
     <div>
-      <OutboundForm />
+      {userRole.data.role !== "CHECKER" && <OutboundForm />}
       <DataTable
         columns={columns}
         data={data}

@@ -43,6 +43,7 @@ import {
   AlertDialogTitle,
 } from "../ui/alert-dialog";
 import { TablePage } from "./TablePage";
+import Condition from "../Condition";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -51,6 +52,7 @@ interface DataTableProps<TData, TValue> {
   onPrint: (selectedRows: TData[]) => void;
   printButton?: boolean;
   deleteButton?: boolean;
+  withSelected?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -60,6 +62,7 @@ export function DataTable<TData, TValue>({
   onPrint,
   printButton = true,
   deleteButton = true,
+  withSelected = true,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = useState({});
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -73,10 +76,27 @@ export function DataTable<TData, TValue>({
     const notes = row.getValue("notes");
     const desc = row.getValue("inputBy");
     const status = row.getValue("status");
+    const method = row.getValue("method");
     const productName = row.original?.product?.name;
     const customer = row.original?.customer_name?.name;
     const sales = row.original?.sales_name?.name;
+    const date = row.getValue("createdAt");
+
+    // Convert user input date from dd-MM-yyyy to Date object
+    const filterDate = new Date(filterValue.split("-").reverse().join("-"));
+
+    // Convert stored date string to Date object
+    const storedDate = date ? new Date(date as any) : null;
+
+    // Check if the dates match (ignoring time)
+    const isDateMatch = storedDate
+      ? storedDate.getFullYear() === filterDate.getFullYear() &&
+        storedDate.getMonth() === filterDate.getMonth() &&
+        storedDate.getDate() === filterDate.getDate()
+      : false;
+
     return (
+      method?.toString().toLowerCase().includes(filterValue.toLowerCase()) ||
       status?.toString().toLowerCase().includes(filterValue.toLowerCase()) ||
       customer?.toString().toLowerCase().includes(filterValue.toLowerCase()) ||
       sales?.toString().toLowerCase().includes(filterValue.toLowerCase()) ||
@@ -87,6 +107,7 @@ export function DataTable<TData, TValue>({
         ?.toString()
         .toLowerCase()
         .includes(filterValue.toLowerCase()) ||
+      isDateMatch ||
       false
     );
   };
@@ -152,31 +173,33 @@ export function DataTable<TData, TValue>({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="flex items-center justify-start space-x-2 py-4">
-        <i className="text-muted-foreground">With selected :</i>
-        {deleteButton && (
-          <Button
-            disabled={selectedRows.length <= 0}
-            variant="outline"
-            className="ml-auto"
-            size={"sm"}
-            onClick={() => setOpenDelete(true)}
-          >
-            Delete
-          </Button>
-        )}
-        {printButton && (
-          <Button
-            disabled={selectedRows.length <= 0}
-            variant="outline"
-            className="ml-auto"
-            size={"sm"}
-            onClick={() => onPrint(selectedRows)}
-          >
-            Print
-          </Button>
-        )}
-      </div>
+      <Condition show={withSelected}>
+        <div className="flex items-center justify-start space-x-2 py-4">
+          <i className="text-muted-foreground">With selected :</i>
+          {deleteButton && (
+            <Button
+              disabled={selectedRows.length <= 0}
+              variant="outline"
+              className="ml-auto"
+              size={"sm"}
+              onClick={() => setOpenDelete(true)}
+            >
+              Delete
+            </Button>
+          )}
+          {printButton && (
+            <Button
+              disabled={selectedRows.length <= 0}
+              variant="outline"
+              className="ml-auto"
+              size={"sm"}
+              onClick={() => onPrint(selectedRows)}
+            >
+              Print
+            </Button>
+          )}
+        </div>
+      </Condition>
       <div className="rounded-md border">
         <Table>
           <TableHeader className="bg-muted">

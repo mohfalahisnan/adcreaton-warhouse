@@ -23,9 +23,9 @@ import { toast } from "@/components/ui/use-toast";
 
 import { useDeleteEmployee, useGetEmployee } from "@/hook/useEmployee";
 import { useLocalStorage } from "@/hook/useLocalstorage";
-import { deleteUsers } from "@/lib/actions/accounts";
+import { deleteUsers, getRoleByEmail } from "@/lib/actions/accounts";
 import { User } from "@prisma/client";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { CheckCircle2, Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import React, { useState } from "react";
@@ -39,6 +39,7 @@ const Page = () => {
   const [open, setOpen] = useState(false);
   const [openAdd, setOpenAdd] = useState(false);
   const [selected, setSelected] = useState<string>();
+
   const deletesQuery = useMutation({
     mutationFn: async (data: User[]) => await deleteUsers(data),
     onSuccess: () => {
@@ -97,6 +98,12 @@ const Page = () => {
     },
   });
 
+  const userRole = useQuery({
+    queryKey: ["role"],
+    queryFn: async () => await getRoleByEmail(session.data?.user.email || ""),
+    enabled: !!session.data?.user.email,
+  });
+  if (!userRole.data) return null;
   const emailColumn: ColumnConfig<User> = {
     accessorKey: "email",
     title: "Email",
@@ -159,23 +166,25 @@ const Page = () => {
   if (!data) return <div>No data available.</div>;
   return (
     <div>
-      <div className="w-full flex items-end justify-end">
-        <ResponsiveDialog
-          title="Add Employee"
-          description=""
-          triggerContent={
-            <Button size={"sm"} className="flex items-center gap-2">
-              <Plus size={12} /> Employee
-            </Button>
-          }
-          open={openAdd}
-          onOpenChange={setOpenAdd}
-        >
-          <div className="max-h-[70vh] overflow-auto">
-            <EmployeeForm onSuccess={() => setOpenAdd(false)} />
-          </div>
-        </ResponsiveDialog>
-      </div>
+      {userRole.data.role !== "CHECKER" && (
+        <div className="w-full flex items-end justify-end">
+          <ResponsiveDialog
+            title="Add Employee"
+            description=""
+            triggerContent={
+              <Button size={"sm"} className="flex items-center gap-2">
+                <Plus size={12} /> Employee
+              </Button>
+            }
+            open={openAdd}
+            onOpenChange={setOpenAdd}
+          >
+            <div className="max-h-[70vh] overflow-auto">
+              <EmployeeForm onSuccess={() => setOpenAdd(false)} />
+            </div>
+          </ResponsiveDialog>
+        </div>
+      )}
       {data && (
         <DataTable
           columns={columns}

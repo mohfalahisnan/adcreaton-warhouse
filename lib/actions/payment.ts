@@ -19,7 +19,21 @@ export const getPayment = async (warehouse: number) => {
     throw new Error("Failed to fetch");
   }
 };
-
+export const getPayments = async (warehouse: number) => {
+  try {
+    const payment = prisma.payment.findMany({
+      where: {
+        warehouseId: warehouse,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    return payment;
+  } catch (error) {
+    throw new Error("Failed to fetch");
+  }
+};
 export const getPaymentDaily = async (warehouse: number) => {
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
@@ -35,6 +49,7 @@ export const getPaymentDaily = async (warehouse: number) => {
     const payments = await prisma.payment.findMany({
       where: {
         warehouseId: warehouse,
+        orderId: null,
         createdAt: {
           gte: startOfDay,
           lte: endOfDay,
@@ -76,8 +91,28 @@ export const getPaymentDaily = async (warehouse: number) => {
     });
 
     console.log(chartData);
-
-    return { payments, totalAmount, chartData };
+    // Fetch payments with orderId
+    const paymentsWithOrderId = await prisma.payment.findMany({
+      where: {
+        warehouseId: warehouse,
+        orderId: {
+          not: null,
+        },
+        createdAt: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+      take: 1000,
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    const totalAmountWithOrderId = paymentsWithOrderId.reduce(
+      (sum, payment) => sum + payment.amount,
+      0
+    );
+    return { payments, totalAmount, chartData, totalAmountWithOrderId };
   } catch (error) {
     throw new Error("Failed to fetch");
   }
@@ -207,11 +242,135 @@ export const getPaymentById = async (id: string) => {
 
 export const getPaymentByOrderId = async (id: string) => {
   try {
-    return await prisma.payment.findUnique({
+    return await prisma.payment.findFirst({
       where: {
         orderId: id,
       },
     });
+  } catch (error) {
+    throw new Error("Failed to fetch");
+  }
+};
+export const getPengeluaran = async (warehouse: number) => {
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999);
+  const startOfWeek = new Date();
+  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+  const endOfWeek = new Date();
+  endOfWeek.setDate(endOfWeek.getDate() + (6 - endOfWeek.getDay()));
+  endOfWeek.setHours(23, 59, 59, 999);
+  try {
+    const payment = await prisma.payment.findMany({
+      where: {
+        amount: {
+          gt: 0,
+        },
+        createdAt: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+        warehouseId: warehouse,
+      },
+      take: 1000,
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    const paymentWeek = await prisma.payment.findMany({
+      where: {
+        amount: {
+          gt: 0,
+        },
+        createdAt: {
+          gte: startOfWeek,
+          lte: endOfWeek,
+        },
+        warehouseId: warehouse,
+      },
+      take: 1000,
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    const report = await prisma.payment.findMany({
+      where: {
+        warehouseId: warehouse,
+        amount: {
+          lt: 0,
+        },
+      },
+      take: 1000,
+    });
+    return { paymentWeek, payment, report };
+  } catch (error) {
+    throw new Error("Failed to fetch");
+  }
+};
+
+export const getTransfer = async (warehouse: number) => {
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999);
+  const startOfWeek = new Date();
+  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+  const endOfWeek = new Date();
+  endOfWeek.setDate(endOfWeek.getDate() + (6 - endOfWeek.getDay()));
+  endOfWeek.setHours(23, 59, 59, 999);
+  try {
+    const payment = await prisma.payment.findMany({
+      where: {
+        method: "TRANSFER",
+        createdAt: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+        warehouseId: warehouse,
+      },
+      take: 1000,
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    const paymentWeek = await prisma.payment.findMany({
+      where: {
+        method: "TRANSFER",
+        createdAt: {
+          gte: startOfWeek,
+          lte: endOfWeek,
+        },
+        warehouseId: warehouse,
+      },
+      take: 1000,
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    const report = await prisma.payment.findMany({
+      where: {
+        warehouseId: warehouse,
+        method: "TRANSFER",
+      },
+      take: 1000,
+    });
+    return { paymentWeek, payment, report };
+  } catch (error) {
+    throw new Error("Failed to fetch");
+  }
+};
+
+export const createPayment2 = async (data: Prisma.PaymentCreateInput) => {
+  try {
+    const payment = await prisma.payment.create({
+      data: {
+        ...data,
+      },
+    });
+    return payment;
   } catch (error) {
     throw new Error("Failed to fetch");
   }

@@ -24,8 +24,10 @@ import { Prisma, Satuan } from "@prisma/client";
 import { toast } from "./ui/use-toast";
 import { queryClient } from "./provider";
 import { StrataValue } from "@/lib/strataValue";
+import { useLocalStorage } from "@/hook/useLocalstorage";
 
 function UnitForm({ id }: { id: string }) {
+  const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
   const [open, setOpen] = useState(false);
   const [add, setAdd] = useState(false);
   const [edit, setEdit] = useState(false);
@@ -33,11 +35,12 @@ function UnitForm({ id }: { id: string }) {
   const [selected, setSelected] = useState<Satuan | null>(null);
   const { data, isLoading } = useQuery({
     queryKey: ["unit", id],
-    queryFn: () => getUnit(id),
+    queryFn: () => getUnit(id, parseInt(warehouseId)),
   });
 
   const addMutation = useMutation({
-    mutationFn: async (item: Satuan) => await addUnit(id, item),
+    mutationFn: async (item: Satuan) =>
+      await addUnit(id, item, parseInt(warehouseId)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["unit", id] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
@@ -231,7 +234,7 @@ function UnitForm({ id }: { id: string }) {
                           <FormControl>
                             <Input
                               type="number"
-                              placeholder="Multiplier..."
+                              placeholder="Quantity..."
                               {...field}
                               value={field.value ? Number(field.value) : ""}
                               onChange={(e) =>

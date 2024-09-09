@@ -97,6 +97,19 @@ export const getAllEmployee = async (warehouse_id: number): Promise<User[]> => {
   }
 };
 
+export const getRoleByEmail = async (email: string) => {
+  try {
+    const role = await prisma.user.findUnique({
+      where: {
+        email: email,
+      },
+    });
+    return role;
+  } catch (error) {
+    throw new Error();
+  }
+};
+
 export const addEmployee = async (data: User): Promise<User> => {
   try {
     const user = await prisma.user.create({

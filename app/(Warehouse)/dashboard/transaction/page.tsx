@@ -34,12 +34,13 @@ import {
   updateOrderStatus,
 } from "@/lib/actions/order";
 import Link from "next/link";
-import Payment from "./Payment";
 
 import { useSession } from "next-auth/react";
 import { createShipment } from "@/lib/actions/shipping";
 import { getCars } from "@/lib/actions/car";
 import { useRouter } from "next/navigation";
+import UangKeluarMasuk from "./UangKeluarMasuk";
+import { getRoleByEmail } from "@/lib/actions/accounts";
 export interface TransactionTable
   extends Prisma.OrderGetPayload<{
     include: {
@@ -188,6 +189,12 @@ const Page = () => {
     queryKey: ["cars"],
     queryFn: async () => await getCars(parseInt(warehouseId)),
   });
+  const userRole = useQuery({
+    queryKey: ["role"],
+    queryFn: async () => await getRoleByEmail(session.data?.user.email || ""),
+    enabled: !!session.data?.user.email,
+  });
+  if (!userRole.data) return null;
   const columnsConfig: ColumnConfig<TransactionTable>[] = [
     {
       accessorKey: "customer_name.name",
@@ -234,6 +241,7 @@ const Page = () => {
             {row.status === "SUCCESS" && (
               <Button
                 size={"xs"}
+                disabled={userRole.data?.role === "CHECKER"}
                 onClick={() =>
                   router.push(`/dashboard/transaction/sukses/${row.order_id}`)
                 }
@@ -245,15 +253,17 @@ const Page = () => {
             {row.status === "ON_DELEVERY" ? (
               <Button
                 size={"xs"}
+                disabled={userRole.data?.role === "CHECKER"}
                 onClick={() =>
                   router.push(`/dashboard/transaction/retur/${row.order_id}`)
                 }
               >
                 ON_DELEVERY
               </Button>
-            ) : row.status === "PAID" ? (
+            ) : row.status === "PENDING" ? (
               <Button
                 size={"xs"}
+                disabled={userRole.data?.role === "CHECKER"}
                 onClick={() => {
                   setShipmentModal(true);
                   setOrderId(row.order_id);
@@ -264,6 +274,7 @@ const Page = () => {
             ) : (
               <Button
                 size={"xs"}
+                disabled={userRole.data?.role === "CHECKER"}
                 className={row.status === "SUCCESS" ? "hidden" : ""}
               >
                 {row.status}
@@ -273,13 +284,13 @@ const Page = () => {
         );
       },
     },
-    {
-      accessorKey: "order_id",
-      title: "Payment",
-      renderCell(cellValue, row) {
-        return <Payment data={row} />;
-      },
-    },
+    // {
+    //   accessorKey: "order_id",
+    //   title: "Payment",
+    //   renderCell(cellValue, row) {
+    //     return <Payment data={row} />;
+    //   },
+    // },
     {
       accessorKey: "totalAmount",
       title: "Total Amount",
@@ -327,17 +338,35 @@ const Page = () => {
   console.log("data:", data);
   return (
     <div>
-      <div className="mb-4">
-        <div className="flex justify-end items-center">
-          <div className="flex gap-2">
-            <Link href={"/dashboard/transaction/new "}>
-              <Button size={"sm"} className="flex items-center gap-2">
-                <Plus size={12} /> Transaction
-              </Button>
-            </Link>
+      {userRole.data.role === "ADMIN" && (
+        <div className="mb-4">
+          <div className="flex justify-end items-center">
+            <div className="flex gap-2">
+              <UangKeluarMasuk />
+              <Link href={"/dashboard/transaction/new "}>
+                <Button size={"sm"} className="flex items-center gap-2">
+                  <Plus size={12} /> Transaction
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {userRole.data.role === "APPROVAL" && (
+        <div className="mb-4">
+          <div className="flex justify-end items-center">
+            <div className="flex gap-2">
+              <UangKeluarMasuk />
+              <Link href={"/dashboard/transaction/new "}>
+                <Button size={"sm"} className="flex items-center gap-2">
+                  <Plus size={12} /> Transaction
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       <DataTable
         columns={columns}

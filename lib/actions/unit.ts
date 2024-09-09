@@ -2,11 +2,12 @@
 import { prisma } from "@/lib/prisma";
 import { Satuan } from "@prisma/client";
 
-export const getUnit = async (id: string) => {
+export const getUnit = async (id: string, warehouseId: number) => {
   try {
     const unit = await prisma.satuan.findMany({
       where: {
         product_id: id,
+        warehouseWarehouse_id: warehouseId,
       },
     });
     return unit;
@@ -16,7 +17,11 @@ export const getUnit = async (id: string) => {
   }
 };
 
-export const addUnit = async (id: string, unit: Satuan) => {
+export const addUnit = async (
+  id: string,
+  unit: Satuan,
+  warehouseId: number
+) => {
   try {
     const units = await prisma.satuan.create({
       data: {
@@ -24,6 +29,7 @@ export const addUnit = async (id: string, unit: Satuan) => {
         product_id: id,
         strata: unit.strata ?? false,
         strataValue: unit.strataValue ?? undefined,
+        warehouseWarehouse_id: warehouseId,
       },
     });
     return units;

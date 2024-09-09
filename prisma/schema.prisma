@@ -258,6 +258,7 @@ model Warehouse {
   Shipment  Shipment[]
   Car       Car[]
   Payment   Payment[]
+  Satuan    Satuan[]
 }
 
 model Product {
@@ -301,7 +302,7 @@ model Payment {
   amount      Float
   checked     Boolean       @default(false)
   checkedBy   String?
-  orderId     String?       @unique
+  orderId     String?
   order       Order?        @relation(fields: [orderId], references: [order_id])
   inputBy     String
   method      PaymentMethod @default(CASH)
@@ -321,12 +322,16 @@ model Satuan {
   strataValue Json?
   total       Int?    @default(0)
 
-  product_id String
-  product    Product     @relation(fields: [product_id], references: [product_id], onDelete: Cascade, onUpdate: Cascade)
-  OrderItem  OrderItem[]
-  Stock      Stock[]
-  Inbound    Inbound[]
-  Outbound   Outbound[]
+  warehouseId Int? @default(1)
+
+  product_id            String
+  product               Product     @relation(fields: [product_id], references: [product_id], onDelete: Cascade, onUpdate: Cascade)
+  OrderItem             OrderItem[]
+  Stock                 Stock[]
+  Inbound               Inbound[]
+  Outbound              Outbound[]
+  Warehouse             Warehouse?  @relation(fields: [warehouseWarehouse_id], references: [warehouse_id])
+  warehouseWarehouse_id Int?
 }
 
 model Category {

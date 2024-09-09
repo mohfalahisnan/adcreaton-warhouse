@@ -4,12 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 
 export const useGetProducts = ({
   queryConfig,
+  warehouseId,
 }: {
   queryConfig?: UseQueryConfig;
+  warehouseId: number;
 }) => {
   return useQuery<ProductWithStock[]>({
     queryKey: ["products"],
-    queryFn: async () => await getProducts(),
+    queryFn: async () => await getProducts(warehouseId),
     ...queryConfig,
   });
 };

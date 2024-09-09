@@ -34,6 +34,7 @@ import { toast } from "@/components/ui/use-toast";
 import { queryClient } from "@/components/provider";
 import Condition from "@/components/Condition";
 import { useSession } from "next-auth/react";
+import { getRoleByEmail } from "@/lib/actions/accounts";
 
 const StockCell = ({ total, Satuan }: { total: number; Satuan: Satuan[] }) => {
   const [stockInUnits, setStockInUnits] = useState<{ [key: string]: number }>(
@@ -74,7 +75,7 @@ const Page = () => {
   const [warehouseId, setWarehouseId] = useLocalStorage("warehouse-id", "1");
   const { data } = useQuery({
     queryKey: ["inbound"],
-    queryFn: async () => await getInbound(Number(warehouseId)),
+    queryFn: async () => await getInbound(parseInt(warehouseId)),
   });
   const reject = useMutation({
     mutationFn: async (id: string) => await rejectInbound(id),
@@ -105,6 +106,13 @@ const Page = () => {
   const [open, setOpen] = useState(false);
   const [openAdd, setOpenAdd] = useState(false);
   const [selected, setSelected] = useState<string>();
+
+  const userRole = useQuery({
+    queryKey: ["role"],
+    queryFn: async () => await getRoleByEmail(session.data?.user.email || ""),
+    enabled: !!session.data?.user.email,
+  });
+  if (!userRole.data) return null;
   if (!session || !session.data) return null;
   //   const deleteQuery = useMutation({
   //     mutationFn: async (id: number) => await deleteCustomer(id),
@@ -213,6 +221,7 @@ const Page = () => {
                 <Button
                   size={"xs"}
                   className="mr-2"
+                  disabled={userRole.data?.role !== "APPROVAL"}
                   onClick={() => approve.mutate(row.inbound_id)}
                 >
                   Approve
@@ -220,6 +229,7 @@ const Page = () => {
                 <Button
                   size={"xs"}
                   variant={"outline"}
+                  disabled={userRole.data?.role !== "APPROVAL"}
                   onClick={() => reject.mutate(row.inbound_id)}
                 >
                   Reject
@@ -270,7 +280,7 @@ const Page = () => {
   if (!data) return null;
   return (
     <div>
-      <InboundForm />
+      {userRole.data.role !== "CHECKER" && <InboundForm />}
       <DataTable
         columns={columns}
         data={data}

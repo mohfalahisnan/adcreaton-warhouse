@@ -4,6 +4,56 @@ import { auth } from "@/app/auth";
 import { Outbound } from "@prisma/client";
 import { format } from "date-fns";
 
+export const getBarangKeluar = async (warehouse: number) => {
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999);
+  const startOfWeek = new Date();
+  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+  const endOfWeek = new Date();
+  endOfWeek.setDate(endOfWeek.getDate() + (6 - endOfWeek.getDay()));
+  endOfWeek.setHours(23, 59, 59, 999);
+  try {
+    const barang = await prisma.outbound.findMany({
+      where: {
+        createdAt: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+        warehouse_id: warehouse,
+      },
+      take: 1000,
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    const barangWeek = await prisma.outbound.findMany({
+      where: {
+        createdAt: {
+          gte: startOfWeek,
+          lte: endOfWeek,
+        },
+        warehouse_id: warehouse,
+      },
+      take: 1000,
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    const list = await prisma.outbound.findMany({
+      where: {
+        warehouse_id: warehouse,
+      },
+      take: 1000,
+    });
+    return { barangWeek, barang, list };
+  } catch (error) {
+    throw new Error("Failed to fetch");
+  }
+};
+
 export const getOutbound = async (id: number) => {
   try {
     const outbound = await prisma.outbound.findMany({

@@ -1,6 +1,9 @@
+import { getRoleByEmail } from "@/lib/actions/accounts";
+import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
   Box,
+  Car,
   DollarSign,
   FileBarChart,
   FileMinus2,
@@ -58,11 +61,11 @@ const menu: Menu[] = [
     url: "/dashboard/transaction",
     icon: <DollarSign />,
   },
-  // {
-  //   title: "Cars",
-  //   url: "/dashboard/cars",
-  //   icon: <Car />,
-  // },
+  {
+    title: "Cars",
+    url: "/dashboard/cars",
+    icon: <Car />,
+  },
   // {
   //   title: "Shipping",
   //   url: "/dashboard/shipping",
@@ -88,13 +91,20 @@ const menu: Menu[] = [
 const SidebarNavigation = (props: Props) => {
   const session = useSession();
   const path = usePathname();
+  const userRole = useQuery({
+    queryKey: ["role"],
+    queryFn: async () => await getRoleByEmail(session.data?.user.email || ""),
+    enabled: !!session.data?.user.email,
+  });
   if (!session || !session.data) return null;
   return (
     <nav className="[&_svg]:w-4 px-4">
       <ul className="flex flex-col gap-2 text-sm">
         {menu.map((item, i) => {
-          // if (item.title === "Settings" && session.data.user.ROLE !== "ADMIN")
-          //   return null;
+          if (item.title === "Settings" && userRole.data?.role !== "ADMIN")
+            return null;
+          if (item.title === "Report" && userRole.data?.role !== "ADMIN")
+            return null;
           return (
             <Link href={item.url} title={item.title} key={i}>
               <li

@@ -88,23 +88,23 @@ export const addItem = async ({
       });
     }
 
-    const stock = await prisma.stock.findFirst({
-      where: {
-        product_id: data.product_id,
-        warehouse_id: data.warehouse_id,
-        unit_id: data.satuan_id || 1,
-      },
-    });
-    if (!stock) {
-      throw new CustomError("Stock not found", {
-        productId: data.product_id,
-        warehouseId: data.warehouse_id,
-        unitId: data.satuan_id || 1,
-      });
-    }
-    if (stock.total <= 0) {
-      throw new CustomError("Stock not enough", { currentStock: stock.total });
-    }
+    // const stock = await prisma.stock.findFirst({
+    //   where: {
+    //     product_id: data.product_id,
+    //     warehouse_id: data.warehouse_id,
+    //     unit_id: data.satuan_id || 1,
+    //   },
+    // });
+    // if (!stock) {
+    //   throw new CustomError("Stock not found", {
+    //     productId: data.product_id,
+    //     warehouseId: data.warehouse_id,
+    //     unitId: data.satuan_id || 1,
+    //   });
+    // }
+    // if (stock.total <= 0) {
+    //   throw new CustomError("Stock not enough", { currentStock: stock.total });
+    // }
 
     // const order = await prisma.order.findUnique({
     //   where: {
@@ -112,15 +112,15 @@ export const addItem = async ({
     //   },
     // });
 
-    let dikali: number = 1;
+    // let dikali: number = 1;
 
-    let totalStock = data.quantity * dikali;
-    console.log("--------- stock :", totalStock);
-    if (stock.total < totalStock) {
-      throw new CustomError(
-        `Insufficient stock: ${totalStock} ${product.name}, current stock ${stock.total}`
-      );
-    }
+    // let totalStock = data.quantity * dikali;
+    // console.log("--------- stock :", totalStock);
+    // if (stock.total < totalStock) {
+    //   throw new CustomError(
+    //     `Insufficient stock: ${totalStock} ${product.name}, current stock ${stock.total}`
+    //   );
+    // }
 
     await prisma.orderItem.create({
       data: {
@@ -167,6 +167,7 @@ export const addItem = async ({
     //   },
     // });
   } catch (error) {
+    console.log("ini error", error);
     if (error instanceof CustomError) {
       console.error("CustomError:", error.message, error.details);
       throw new Error(`Failed to process request: ${error.message}`);
@@ -340,6 +341,68 @@ export const deleteOrder = async (id: string) => {
       },
     });
     return order;
+  } catch (error) {
+    console.log(error);
+    throw new Error("Failed to fetch");
+  }
+};
+
+export const getOrderDaily = async (warehouse: number) => {
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999);
+  const startOfWeek = new Date();
+  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+  const endOfWeek = new Date();
+  endOfWeek.setDate(endOfWeek.getDate() + (6 - endOfWeek.getDay()));
+  endOfWeek.setHours(23, 59, 59, 999);
+  try {
+    const orders = await prisma.order.findMany({
+      where: {
+        warehouse_id: warehouse,
+        createdAt: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+      take: 1000,
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    const orderWeek = await prisma.order.findMany({
+      where: {
+        warehouse_id: warehouse,
+        createdAt: {
+          gte: startOfWeek,
+          lte: endOfWeek,
+        },
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    return { orders, orderWeek };
+  } catch (error) {
+    console.log(error);
+    throw new Error("Failed to fetch");
+  }
+};
+
+export const orderReport = async (warehouse: number) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: {
+        warehouse_id: warehouse,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    return orders;
   } catch (error) {
     console.log(error);
     throw new Error("Failed to fetch");
@@ -610,11 +673,12 @@ export const addRetur = async (
   }
 };
 
-export const addFinalOrder = async (order_id: string) => {
+export const addFinalOrder = async (order_id: string, amount: number) => {
   try {
     await prisma.finalOrder.create({
       data: {
         order_id: order_id,
+        amount: amount,
       },
     });
   } catch (error) {

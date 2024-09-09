@@ -164,31 +164,31 @@ export function DataTable({ data }: { data: ProductWithStock[] }) {
       enableHiding: true,
       accessorKey: "inputby",
     },
-    {
-      accessorKey: "sell_price",
-      header: ({ column }) => (
-        <div className="text-right">
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Price
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
-      ),
-      cell: ({ row }) => {
-        const amount = parseFloat(row.getValue("sell_price"));
+    // {
+    //   accessorKey: "sell_price",
+    //   header: ({ column }) => (
+    //     <div className="text-right">
+    //       <Button
+    //         variant="ghost"
+    //         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+    //       >
+    //         Price
+    //         <ArrowUpDown className="ml-2 h-4 w-4" />
+    //       </Button>
+    //     </div>
+    //   ),
+    //   cell: ({ row }) => {
+    //     const amount = parseFloat(row.getValue("sell_price"));
 
-        // Format the amount as a dollar amount
-        const formatted = new Intl.NumberFormat("id-ID", {
-          style: "currency",
-          currency: "IDR",
-        }).format(amount);
+    //     // Format the amount as a dollar amount
+    //     const formatted = new Intl.NumberFormat("id-ID", {
+    //       style: "currency",
+    //       currency: "IDR",
+    //     }).format(amount);
 
-        return <div className="text-right font-medium mr-3">{formatted}</div>;
-      },
-    },
+    //     return <div className="text-right font-medium mr-3">{formatted}</div>;
+    //   },
+    // },
     {
       id: "actions",
       enableHiding: false,
