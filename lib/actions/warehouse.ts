@@ -20,14 +20,19 @@ export const createWarehouse = async ({
   data: Omit<Warehouse, "warehouse_id">;
 }) => {
   try {
+    console.log(data);
     const warehouse = prisma.warehouse.create({
-      data: data,
+      data: {
+        location: data.location,
+        name: data.name,
+        address: data.address,
+        phone: data.phone,
+      },
     });
     return warehouse;
   } catch (error) {
-    const errorMessage = handlePrismaError(error);
-    console.error(errorMessage);
-    throw new Error(`Failed to fetch categories: ${errorMessage}`);
+    console.log(error);
+    throw new Error(`Failed to fetch`);
   }
 };
 
