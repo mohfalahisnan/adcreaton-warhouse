@@ -19,6 +19,7 @@ import TableCategory from "../category/TableCategory";
 import UserSetting from "@/components/UserSetting";
 import CheckerSetting from "@/components/CheckerSetting";
 import ApprovalSetting from "@/components/ApprovalSetting";
+import WarehouseSetting from "@/components/WarehouseSetting";
 
 type Props = {};
 
@@ -95,6 +96,22 @@ const Page = (props: Props) => {
               <DialogTitle>Categories</DialogTitle>
               <DialogDescription className="text-foreground">
                 <TableCategory data={category.data} />
+              </DialogDescription>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>
+              <Cog size={18} className="mr-2" />
+              Warehouse
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogDescription className="text-foreground">
+                <WarehouseSetting />
               </DialogDescription>
             </DialogHeader>
           </DialogContent>
