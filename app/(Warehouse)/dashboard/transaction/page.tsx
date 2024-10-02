@@ -353,6 +353,21 @@ const Page = () => {
         </div>
       )}
 
+      {userRole.data.role === "SUPERADMIN" && (
+        <div className="mb-4">
+          <div className="flex justify-end items-center">
+            <div className="flex gap-2">
+              <UangKeluarMasuk />
+              <Link href={"/dashboard/transaction/new "}>
+                <Button size={"sm"} className="flex items-center gap-2">
+                  <Plus size={12} /> Transaction
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {userRole.data.role === "APPROVAL" && (
         <div className="mb-4">
           <div className="flex justify-end items-center">

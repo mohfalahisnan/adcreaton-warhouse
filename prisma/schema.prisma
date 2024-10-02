@@ -355,6 +355,7 @@ enum Role {
   SALES
   CHECKER
   APPROVAL
+  SUPERADMIN
 }
 
 enum StatusOrder {

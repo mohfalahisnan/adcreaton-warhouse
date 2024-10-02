@@ -2,6 +2,7 @@ import React from "react";
 import LoginPage from "./LoginPage";
 import { auth } from "./auth";
 import { redirect } from "next/navigation";
+import CreateUser from "@/components/CreateUser";
 
 const Home = async ({
   searchParams,
@@ -16,6 +17,7 @@ const Home = async ({
 
   return (
     <div>
+      <CreateUser />
       <LoginPage searchParams={searchParams} />
     </div>
   );

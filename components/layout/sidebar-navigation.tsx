@@ -101,9 +101,11 @@ const SidebarNavigation = (props: Props) => {
     <nav className="[&_svg]:w-4 px-4">
       <ul className="flex flex-col gap-2 text-sm">
         {menu.map((item, i) => {
-          if (item.title === "Settings" && userRole.data?.role !== "ADMIN")
-            return null;
-          if (item.title === "Report" && userRole.data?.role !== "ADMIN")
+           if (
+            (item.title === "Settings" || item.title === "Report") &&
+            userRole.data?.role !== "ADMIN" &&
+            userRole.data?.role !== "SUPERADMIN"
+          )
             return null;
           return (
             <Link href={item.url} title={item.title} key={i}>

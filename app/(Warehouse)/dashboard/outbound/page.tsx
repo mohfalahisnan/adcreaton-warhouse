@@ -161,7 +161,10 @@ const Page = () => {
                 <Button
                   size={"xs"}
                   className="mr-2"
-                  disabled={userRole.data?.role !== "APPROVAL"}
+                  disabled={
+                    userRole.data?.role !== "APPROVAL" &&
+                    userRole.data?.role !== "SUPERADMIN"
+                  }
                   onClick={() => approve.mutate(row.outbound_id)}
                 >
                   Approve
@@ -169,7 +172,10 @@ const Page = () => {
                 <Button
                   size={"xs"}
                   variant={"outline"}
-                  disabled={userRole.data?.role !== "APPROVAL"}
+                  disabled={
+                    userRole.data?.role !== "APPROVAL" &&
+                    userRole.data?.role !== "SUPERADMIN"
+                  }
                   onClick={() => reject.mutate(row.outbound_id)}
                 >
                   Reject
