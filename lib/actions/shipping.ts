@@ -54,7 +54,7 @@ export const createShipment = async (data: Omit<Shipment, "shipment_id">) => {
         },
         data: {
           product_id: item.product_id,
-          total: (item.satuan?.total || 0) - item.quantity * -1,
+          total: (item.satuan?.total || 0) - item.quantity,
         },
       });
     });
