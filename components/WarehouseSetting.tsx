@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Button } from "./ui/button";
 import Condition from "./Condition";
 import { WarehouseForm } from "./WarehouseForm";
+import WarehouseListSetting from "./WarehouseListSetting";
 
 const WarehouseSetting = () => {
   const [state, setState] = useState<"table" | "add">("table");
@@ -20,7 +21,7 @@ const WarehouseSetting = () => {
         </Condition>
         <Condition show={state === "table"}>
           {/* <TableUsers role="ADMIN" /> */}
-          Warehouse list
+          <WarehouseListSetting />
         </Condition>
       </div>
     </div>

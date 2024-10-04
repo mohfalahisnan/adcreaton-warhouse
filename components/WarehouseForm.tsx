@@ -27,7 +27,7 @@ const formSchema = z.object({
 
 export function WarehouseForm() {
   const qmutate = useMutation({
-    mutationFn: async (data: any) => await createWarehouse(data),
+    mutationFn: async (data: any) => await createWarehouse({ data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["warehouse"] });
       toast({
@@ -39,7 +39,7 @@ export function WarehouseForm() {
               </span>
             </div>
             <div>
-              <h3 className="text-lg">Order Deleted!</h3>
+              <h3 className="text-lg">Sucess!</h3>
             </div>
           </div>
         ),
@@ -52,19 +52,13 @@ export function WarehouseForm() {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    qmutate.mutate({
-      ...values,
-    });
+    console.log("values:", values);
+    qmutate.mutate(values);
   }
 
   return (
     <Form {...form}>
-      <form
-        noValidate
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-8"
-      >
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
           control={form.control}
           name="name"

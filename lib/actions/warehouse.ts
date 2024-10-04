@@ -26,7 +26,7 @@ export const createWarehouse = async ({
         location: data.location,
         name: data.name,
         address: data.address,
-        phone: data.phone,
+        phone: data.phone?.toString(),
       },
     });
     return warehouse;
